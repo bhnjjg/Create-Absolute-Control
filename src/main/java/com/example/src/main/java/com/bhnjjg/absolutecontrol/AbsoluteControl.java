@@ -17,7 +17,7 @@ public class AbsoluteControl {
 
     // 注册我们的“无线红石信号终端”物品
     public static final DeferredItem<Item> WIRELESS_TERMINAL = ITEMS.register("wireless_terminal", 
-        () -> new Item(new Item.Properties()));
+        () -> new WirelessTerminalItem(new Item.Properties()));
 
     public AbsoluteControl(IEventBus modEventBus) {
         // 把物品注册器绑定到模组总线上
