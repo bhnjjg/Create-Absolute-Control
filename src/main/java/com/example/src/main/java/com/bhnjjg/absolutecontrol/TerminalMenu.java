@@ -20,7 +20,6 @@ public class TerminalMenu extends AbstractContainerMenu {
         this.terminalStack = terminalStack;
         this.container = new SimpleContainer(2);
 
-        // 读取物品里存的频率
         CustomData customData = terminalStack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
         CompoundTag tag = customData.copyTag();
         if (tag.contains("freq1")) {
@@ -30,25 +29,33 @@ public class TerminalMenu extends AbstractContainerMenu {
             this.container.setItem(1, ItemStack.parseOptional(playerInventory.player.registryAccess(), tag.getCompound("freq2")));
         }
 
-        // 👇 频率 1 槽位（对齐你的图：18, 32）禁止拖拽 👇
-        this.addSlot(new Slot(container, 0, 18, 32) {
+        // 👇 终极绝杀：重写 Slot 的渲染，去除原版黑框 👇
+        // 坐标 (35, 45) 和 (65, 45) 是相对 187x189 图算出来的，你可以根据实际微调
+        this.addSlot(new Slot(container, 0, 35, 45) {
             @Override public int getMaxStackSize() { return 1; }
-            @Override public boolean mayPlace(ItemStack stack) { return false; } // 禁止拖拽放入
+            @Override public boolean mayPlace(ItemStack stack) { return false; } // 禁止直接拖拽
+            @Override
+            public void render(net.minecraft.client.gui.GuiGraphics guiGraphics, int index) {
+                // 强行覆盖，什么都不画，彻底干掉原版背景！
+            }
         });
         
-        // 👇 频率 2 槽位（对齐你的图：48, 32）禁止拖拽 👇
-        this.addSlot(new Slot(container, 1, 48, 32) {
+        this.addSlot(new Slot(container, 1, 65, 45) {
             @Override public int getMaxStackSize() { return 1; }
-            @Override public boolean mayPlace(ItemStack stack) { return false; } // 禁止拖拽放入
+            @Override public boolean mayPlace(ItemStack stack) { return false; }
+            @Override
+            public void render(net.minecraft.client.gui.GuiGraphics guiGraphics, int index) {
+                // 强行覆盖，什么都不画，彻底干掉原版背景！
+            }
         });
 
-        // 👇 玩家背包（对齐你图里的大灰框，大概从 8, 110 开始） 👇
+        // 玩家背包 (原版标准尺寸)
         for (int i = 0; i < 3; ++i) {
             for (int j = 0; j < 9; ++j) {
                 this.addSlot(new Slot(playerInventory, j + i * 9 + 9, 8 + j * 18, 110 + i * 18));
             }
         }
-        // 👇 快捷栏（最下面一排，大概在 8, 168） 👇
+        // 快捷栏
         for (int k = 0; k < 9; ++k) {
             this.addSlot(new Slot(playerInventory, k, 8 + k * 18, 168));
         }
@@ -58,35 +65,29 @@ public class TerminalMenu extends AbstractContainerMenu {
         this(containerId, playerInventory, playerInventory.player.getMainHandItem());
     }
 
-    // 供 Screen 调用来设置或取消“分身”
     public void setFrequency(int slotIndex, ItemStack stack) {
         if (stack.isEmpty()) {
             this.container.setItem(slotIndex, ItemStack.EMPTY);
         } else {
             ItemStack ghost = stack.copy();
-            ghost.setCount(1); // 强制只显示1个
+            ghost.setCount(1); 
             this.container.setItem(slotIndex, ghost);
         }
-        this.broadcastChanges(); // 刷新界面
+        this.broadcastChanges(); 
     }
 
-    // 关闭界面时保存数据
     @Override
     public void removed(Player player) {
-        super.removed(player);
+        super.remove(player);
         CustomData customData = terminalStack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
         CompoundTag tag = customData.copyTag();
 
-        if (!this.container.getItem(0).isEmpty()) {
-            tag.put("freq1", this.container.getItem(0).save(player.registryAccess()));
-        } else {
-            tag.remove("freq1");
-        }
-        if (!this.container.getItem(1).isEmpty()) {
-            tag.put("freq2", this.container.getItem(1).save(player.registryAccess()));
-        } else {
-            tag.remove("freq2");
-        }
+        if (!this.container.getItem(0).isEmpty()) tag.put("freq1", this.container.getItem(0).save(player.registryAccess()));
+        else tag.remove("freq1");
+        
+        if (!this.container.getItem(1).isEmpty()) tag.put("freq2", this.container.getItem(1).save(player.registryAccess()));
+        else tag.remove("freq2");
+
         terminalStack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
     }
 
@@ -94,7 +95,5 @@ public class TerminalMenu extends AbstractContainerMenu {
     public boolean stillValid(Player player) { return true; }
 
     @Override
-    public ItemStack quickMoveStack(Player player, int index) {
-        return ItemStack.EMPTY; // 禁用 Shift 快速移动
-    }
+    public ItemStack quickMoveStack(Player player, int index) { return ItemStack.EMPTY; }
 }
