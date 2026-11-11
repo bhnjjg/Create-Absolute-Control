@@ -10,6 +10,11 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.sounds.SoundEvents;
 
+// 👇 这次老老实实把正确的包名写上 👇
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.nbt.CompoundTag;
+
 public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
     private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath("absolute_control", "textures/gui/terminal_gui.png");
     private EditBox rangeInput;
@@ -29,13 +34,13 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         int x = (this.width - this.imageWidth) / 2;
         int y = (this.height - this.imageHeight) / 2;
 
-        // 👇 输入框：位置 X=45, Y=69，宽 50，高 12 (修复字体拉宽问题) 👇
+        // 输入框：宽 50，高 12，位置 X=45, Y=69
         this.rangeInput = new EditBox(this.font, x + 45, y + 69, 50, 12, Component.literal("范围"));
         this.rangeInput.setMaxLength(3);
         this.rangeInput.setValue("2");
         this.rangeInput.setFilter(text -> text.matches("\\d*"));
         this.rangeInput.setBordered(false);
-        this.rangeInput.setTextColor(0x000000); // 纯黑字
+        this.rangeInput.setTextColor(0x000000); 
         this.addRenderableWidget(this.rangeInput);
     }
 
@@ -53,10 +58,11 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
                     int range = value.isEmpty() ? 2 : Integer.parseInt(value);
                     
                     ItemStack stack = ((TerminalMenu) this.menu).getTerminalStack();
-                    net.minecraft.core.component.CustomData customData = stack.getOrDefault(net.minecraft.core.component.DataComponents.CUSTOM_DATA, net.minecraft.core.component.CustomData.EMPTY);
-                    net.minecraft.nbt.CompoundTag tag = customData.copyTag();
+                    // 👇 这里也改成正确的 CustomData 路径 👇
+                    CustomData customData = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
+                    CompoundTag tag = customData.copyTag();
                     tag.putInt("range", range);
-                    stack.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA, net.minecraft.core.component.CustomData.of(tag));
+                    stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
 
                     this.minecraft.player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 0.5F, 1.0F);
                     this.minecraft.player.sendSystemMessage(Component.literal("§a[绝对控制] 配置已保存！范围: " + range));
@@ -115,13 +121,11 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
         
-        // 选中高亮白框
         if (selectedSlot != -1) {
             Slot slot = this.menu.slots.get(selectedSlot);
             guiGraphics.fill(this.leftPos + slot.x, this.topPos + slot.y, this.leftPos + slot.x + 16, this.topPos + slot.y + 16, 0x88FFFFFF);
         }
 
-        // 悬停提示（频率1/2）
         for (int i = 0; i < 2; i++) {
             Slot slot = this.menu.slots.get(i);
             if (this.isHovering(slot.x, slot.y, 16, 16, mouseX, mouseY)) {
@@ -133,7 +137,6 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
     @Override
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
         Component titleText = this.getTitle();
-        // 黄色标题带阴影
         guiGraphics.drawString(this.font, titleText, 6, 3, 0xFFFF00, true);
     }
 }
