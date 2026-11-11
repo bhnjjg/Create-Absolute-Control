@@ -15,7 +15,6 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
     public TerminalScreen(TerminalMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
-        // 你的图的准确尺寸
         this.imageWidth = 187;
         this.imageHeight = 189;
         this.titleLabelX = -1000; 
@@ -28,17 +27,14 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         int x = (this.width - this.imageWidth) / 2;
         int y = (this.height - this.imageHeight) / 2;
 
-        // 👇 根据截图估算，把输入框强行塞进你画的长条里 👇
-        // 去掉了原版边框，并且把字数限制调大，让数字居中显示
-        this.rangeInput = new EditBox(this.font, x + 50, y + 100, 80, 15, Component.literal("范围"));
+        // 输入框：根据新布局大概在 X=40, Y=68 的位置
+        this.rangeInput = new EditBox(this.font, x + 40, y + 68, 90, 15, Component.literal("范围"));
         this.rangeInput.setMaxLength(3);
         this.rangeInput.setValue("2");
         this.rangeInput.setFilter(text -> text.matches("\\d*"));
-        this.rangeInput.setBordered(false); // 彻底干掉原版黑框
-        this.rangeInput.setTextColor(0x000000); // 如果背景是浅色，用黑字；如果是深色改回 0xFFFFFF
+        this.rangeInput.setBordered(false); // 去黑框
+        this.rangeInput.setTextColor(0xFFFFFF); // 白字
         this.addRenderableWidget(this.rangeInput);
-        
-        // 🚨 注意：这里不再 new 任何 Button 了！彻底删掉那个丑东西！
     }
 
     @Override
@@ -47,32 +43,32 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         double localY = mouseY - this.topPos;
 
         if (button == 0) {
-            // 1. 判定是否点在了你画的“打勾”按钮上（根据截图，大概在 X:140, Y:100 附近）
-            if (localX >= 130 && localX <= 170 && localY >= 90 && localY <= 120) {
+            // 1. 判定按钮 (X=140, Y=68 附近)
+            if (localX >= 140 && localX <= 170 && localY >= 65 && localY <= 90) {
                 if (this.minecraft != null && this.minecraft.player != null) {
-                    this.minecraft.player.sendSystemMessage(Component.literal("§a[绝对控制] 点击了打勾按钮！范围：" + this.rangeInput.getValue()));
+                    this.minecraft.player.sendSystemMessage(Component.literal("§a[绝对控制] 保存！范围：" + this.rangeInput.getValue()));
                 }
-                return true; // 拦截点击
+                return true; 
             }
 
-            // 2. 判定频率槽位（坐标得重新对齐你画的框）
-            if (localX >= 35 && localX <= 65 && localY >= 65 && localY <= 95) {
+            // 2. 判定频率槽位 (必须严格对齐 Menu 里的 35,45 和 65,45)
+            // 注意：这里用 isHovering 判断，确保 100% 贴合
+            if (this.isHovering(35, 45, 18, 18, mouseX, mouseY)) {
                 toggleSelection(0);
                 return true;
             }
-            else if (localX >= 75 && localX <= 105 && localY >= 65 && localY <= 95) {
+            else if (this.isHovering(65, 45, 18, 18, mouseX, mouseY)) {
                 toggleSelection(1);
                 return true;
             }
 
-            // 3. 背包点击判定
+            // 3. 判定背包
             if (selectedSlot != -1) {
-                // 适配你图里的背包位置（大概从 y=160 开始）
-                if (mouseX >= this.leftPos + 20 && mouseX < this.leftPos + 20 + 9 * 18 &&
-                    mouseY >= this.topPos + 160 && mouseY < this.topPos + 160 + 3 * 18) {
+                if (mouseX >= this.leftPos + 8 && mouseX < this.leftPos + 8 + 9 * 18 &&
+                    mouseY >= this.topPos + 110 && mouseY < this.topPos + 110 + 3 * 18) {
                     
-                    int col = (int) ((mouseX - (this.leftPos + 20)) / 18);
-                    int row = (int) ((mouseY - (this.topPos + 160)) / 18);
+                    int col = (int) ((mouseX - (this.leftPos + 8)) / 18);
+                    int row = (int) ((mouseY - (this.topPos + 110)) / 18);
                     int slotIndex = 2 + col + row * 9; 
 
                     if (slotIndex >= 2 && slotIndex < this.menu.slots.size()) {
@@ -93,18 +89,16 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
     }
 
     private void toggleSelection(int slotIndex) {
-        if (selectedSlot == slotIndex) {
-            selectedSlot = -1; 
-        } else {
-            selectedSlot = slotIndex; 
-        }
+        if (selectedSlot == slotIndex) selectedSlot = -1; 
+        else selectedSlot = slotIndex; 
     }
 
     @Override
     protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
         int x = (this.width - this.imageWidth) / 2;
         int y = (this.height - this.imageHeight) / 2;
-        guiGraphics.blit(TEXTURE, x, y, 0, 0, 187, 189);
+        // 严格按 187x189 渲染
+        guiGraphics.blit(TEXTURE, x, y, 0, 0, 187, 189, 187, 189);
     }
 
     @Override
@@ -112,20 +106,11 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
         
-        // 选中高亮白框
+        // 画选中白框
         if (selectedSlot != -1) {
-            int slotX = this.leftPos + (selectedSlot == 0 ? 35 : 75);
-            int slotY = this.topPos + 65;
-            guiGraphics.fill(slotX - 1, slotY - 1, slotX + 31, slotY + 31, 0xFFFFFFFF);
+            int slotX = this.leftPos + (selectedSlot == 0 ? 35 : 65);
+            int slotY = this.topPos + 45;
+            guiGraphics.fill(slotX, slotY, slotX + 18, slotY + 18, 0xFFFFFFFF);
         }
-
-        this.renderTooltip(guiGraphics, mouseX, mouseY);
-    }
-
-    @Override
-    protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        Component titleText = this.getTitle();
-        // 字居中于黄色区域
-        guiGraphics.drawString(this.font, titleText, 55, 10, 0x404040, false);
     }
 }
