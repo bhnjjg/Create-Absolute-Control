@@ -33,8 +33,8 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         int x = (this.width - this.imageWidth) / 2;
         int y = (this.height - this.imageHeight) / 2;
 
-        // 👇 坐标已死磕锁定为 X=28, Y=76 👇
-        this.rangeInput = new EditBox(this.font, x + 28, y + 76, 100, 12, Component.literal("范围"));
+        // 👇 终极坐标：X=28 (不变), Y=67 (往上提9格) 👇
+        this.rangeInput = new EditBox(this.font, x + 28, y + 67, 100, 12, Component.literal("范围"));
         this.rangeInput.setMaxLength(3);
         this.rangeInput.setValue("2");
         this.rangeInput.setFilter(text -> text.matches("\\d*"));
@@ -52,7 +52,6 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         double localY = mouseY - this.topPos;
 
         if (button == 0) {
-            // 打勾按钮区域
             if (localX >= 135 && localX <= 165 && localY >= 58 && localY <= 85) {
                 if (this.minecraft != null && this.minecraft.player != null) {
                     String value = this.rangeInput.getValue();
@@ -70,7 +69,6 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
                 return true; 
             }
 
-            // 频率槽位
             for (int i = 0; i < 2; i++) {
                 Slot slot = this.menu.slots.get(i);
                 if (this.isHovering(slot.x, slot.y, 16, 16, mouseX, mouseY)) {
@@ -79,7 +77,6 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
                 }
             }
 
-            // 背包判定
             if (selectedSlot != -1) {
                 for (Slot slot : this.menu.slots) {
                     if (slot.index >= 2 && this.isHovering(slot.x, slot.y, 16, 16, mouseX, mouseY)) {
