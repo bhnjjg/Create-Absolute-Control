@@ -29,28 +29,25 @@ public class TerminalMenu extends AbstractContainerMenu {
             this.container.setItem(1, ItemStack.parseOptional(playerInventory.player.registryAccess(), tag.getCompound("freq2")));
         }
 
-        // 👇 频率槽位 👇
-        this.addSlot(new Slot(container, 0, 35, 42) {
+        // 👇 频率 1（Y坐标往上提，防止偏下） 👇
+        this.addSlot(new Slot(container, 0, 35, 32) {
             @Override public int getMaxStackSize() { return 1; }
             @Override public boolean mayPlace(ItemStack stack) { return false; }
-            @Override
-            public void render(net.minecraft.client.gui.GuiGraphics guiGraphics, int index) {}
         });
         
-        this.addSlot(new Slot(container, 1, 65, 42) {
+        // 👇 频率 2 👇
+        this.addSlot(new Slot(container, 1, 65, 32) {
             @Override public int getMaxStackSize() { return 1; }
             @Override public boolean mayPlace(ItemStack stack) { return false; }
-            @Override
-            public void render(net.minecraft.client.gui.GuiGraphics guiGraphics, int index) {}
         });
 
-        // 玩家背包（Y 改到 115）
+        // 玩家背包（Y 调回 115）
         for (int i = 0; i < 3; ++i) {
             for (int j = 0; j < 9; ++j) {
                 this.addSlot(new Slot(playerInventory, j + i * 9 + 9, 8 + j * 18, 115 + i * 18));
             }
         }
-        // 快捷栏（Y 改到 173）
+        // 快捷栏（Y 调回 173）
         for (int k = 0; k < 9; ++k) {
             this.addSlot(new Slot(playerInventory, k, 8 + k * 18, 173));
         }
