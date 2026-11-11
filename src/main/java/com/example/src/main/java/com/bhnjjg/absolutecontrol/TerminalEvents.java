@@ -4,7 +4,6 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -13,7 +12,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 
-@EventBusSubscriber(modid = AbsoluteControl.MODID, bus = EventBusSubscriber.Bus.GAME)
+@EventBusSubscriber(modid = AbsoluteControl.MODID) // 改用新版默认写法，去掉警告
 public class TerminalEvents {
 
     @SubscribeEvent
@@ -44,9 +43,8 @@ public class TerminalEvents {
                     
                     player.sendSystemMessage(Component.literal("§a[绝对控制] 已拆除终端，并返还！"));
                     
-                    // 拦截破坏方块，并返回成功
+                    // 核心：拦截破坏方块，只要这一句就足够了！
                     event.setCanceled(true);
-                    event.setCancellationResult(InteractionResult.SUCCESS);
                 }
             }
         }
