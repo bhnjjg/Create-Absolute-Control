@@ -30,9 +30,9 @@ public class WirelessTerminalItem extends Item {
             CompoundTag tag = customData.copyTag();
 
             if (tag.contains("boundX")) {
-                // 👇 核心：打开咱们刚刚注册好的 TerminalMenu 面板 👇
+                // 👇 这里加上了 itemstack 👇
                 player.openMenu(new SimpleMenuProvider(
-                        (containerId, playerInventory, p) -> new TerminalMenu(containerId, playerInventory),
+                        (containerId, playerInventory, p) -> new TerminalMenu(containerId, playerInventory, itemstack),
                         Component.literal("无线红石信号终端")
                 ));
             } else {
