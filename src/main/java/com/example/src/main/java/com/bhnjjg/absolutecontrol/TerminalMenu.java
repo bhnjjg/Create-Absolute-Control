@@ -1,130 +1,142 @@
 package com.bhnjjg.absolutecontrol;
 
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.SimpleContainer;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.sounds.SoundEvents;
+
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.component.CustomData;
+import net.minecraft.nbt.CompoundTag;
 
-public class TerminalMenu extends AbstractContainerMenu {
-    private final SimpleContainer container;
-    private final ItemStack terminalStack;
+public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
+    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath("absolute_control", "textures/gui/terminal_gui.png");
+    private EditBox rangeInput;
+    private int selectedSlot = -1; 
 
-    public TerminalMenu(int containerId, Inventory playerInventory, ItemStack terminalStack) {
-        super(AbsoluteControl.TERMINAL_MENU.get(), containerId);
-        this.terminalStack = terminalStack;
-        this.container = new SimpleContainer(2);
+    public TerminalScreen(TerminalMenu menu, Inventory playerInventory, Component title) {
+        super(menu, playerInventory, title);
+        this.imageWidth = 187;
+        this.imageHeight = 189;
+        this.titleLabelX = -1000; 
+        this.inventoryLabelY = -1000; 
+    }
 
-        CustomData customData = terminalStack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
-        CompoundTag tag = customData.copyTag();
-        if (tag.contains("freq1")) {
-            this.container.setItem(0, ItemStack.parseOptional(playerInventory.player.registryAccess(), tag.getCompound("freq1")));
+    @Override
+    protected void init() {
+        super.init();
+        int x = (this.width - this.imageWidth) / 2;
+        int y = (this.height - this.imageHeight) / 2;
+
+        // 👇 坐标已死磕锁定为 X=28, Y=76 👇
+        this.rangeInput = new EditBox(this.font, x + 28, y + 76, 100, 12, Component.literal("范围"));
+        this.rangeInput.setMaxLength(3);
+        this.rangeInput.setValue("2");
+        this.rangeInput.setFilter(text -> text.matches("\\d*"));
+        this.rangeInput.setBordered(false); 
+        this.rangeInput.setTextColor(0x000000); 
+        this.rangeInput.setCanLoseFocus(true); 
+        this.rangeInput.setCursorPosition(0); 
+        this.rangeInput.setHighlightPos(0);
+        this.addRenderableWidget(this.rangeInput);
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        double localX = mouseX - this.leftPos;
+        double localY = mouseY - this.topPos;
+
+        if (button == 0) {
+            // 打勾按钮区域
+            if (localX >= 135 && localX <= 165 && localY >= 58 && localY <= 85) {
+                if (this.minecraft != null && this.minecraft.player != null) {
+                    String value = this.rangeInput.getValue();
+                    int range = value.isEmpty() ? 2 : Integer.parseInt(value);
+                    
+                    ItemStack stack = ((TerminalMenu) this.menu).getTerminalStack();
+                    CustomData customData = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
+                    CompoundTag tag = customData.copyTag();
+                    tag.putInt("range", range);
+                    stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+
+                    this.minecraft.player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 0.5F, 1.0F);
+                    this.minecraft.player.sendSystemMessage(Component.literal("§a[绝对控制] 配置已保存！范围: " + range));
+                }
+                return true; 
+            }
+
+            // 频率槽位
+            for (int i = 0; i < 2; i++) {
+                Slot slot = this.menu.slots.get(i);
+                if (this.isHovering(slot.x, slot.y, 16, 16, mouseX, mouseY)) {
+                    toggleSelection(i);
+                    return true;
+                }
+            }
+
+            // 背包判定
+            if (selectedSlot != -1) {
+                for (Slot slot : this.menu.slots) {
+                    if (slot.index >= 2 && this.isHovering(slot.x, slot.y, 16, 16, mouseX, mouseY)) {
+                        ItemStack source = slot.getItem();
+                        if (!source.isEmpty()) {
+                            ((TerminalMenu) this.menu).setFrequency(selectedSlot, source); 
+                            if (this.minecraft != null && this.minecraft.player != null) {
+                                this.minecraft.player.playSound(SoundEvents.ITEM_PICKUP, 0.5F, 1.5F);
+                            }
+                        }
+                        selectedSlot = -1; 
+                        return true; 
+                    }
+                }
+                selectedSlot = -1; 
+                return true;
+            }
         }
-        if (tag.contains("freq2")) {
-            this.container.setItem(1, ItemStack.parseOptional(playerInventory.player.registryAccess(), tag.getCompound("freq2")));
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    private void toggleSelection(int slotIndex) {
+        if (this.minecraft != null && this.minecraft.player != null) {
+            this.minecraft.player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 0.5F, 1.0F);
         }
+        if (selectedSlot == slotIndex) selectedSlot = -1; 
+        else selectedSlot = slotIndex; 
+    }
 
-        // 频率槽位（未改动）
-        this.addSlot(new Slot(container, 0, 17, 29) {
-            @Override public int getMaxStackSize() { return 1; }
-            @Override public boolean mayPlace(ItemStack stack) { return false; }
-        });
-        this.addSlot(new Slot(container, 1, 40, 29) {
-            @Override public int getMaxStackSize() { return 1; }
-            @Override public boolean mayPlace(ItemStack stack) { return false; }
-        });
+    @Override
+    protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
+        int x = (this.width - this.imageWidth) / 2;
+        int y = (this.height - this.imageHeight) / 2;
+        guiGraphics.blit(TEXTURE, x, y, 0, 0, 187, 189, 187, 189);
+    }
 
-        // ==========================================================
-        // 👇 百分百按照你给的 Y轴 (105, 123, 141, 163) 手敲 👇
-        // ==========================================================
+    @Override
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
         
-        // 大背包 - 第一排 (Y=105)
-        this.addSlot(new Slot(playerInventory, 9, 8, 105));
-        this.addSlot(new Slot(playerInventory, 10, 26, 105));
-        this.addSlot(new Slot(playerInventory, 11, 44, 105));
-        this.addSlot(new Slot(playerInventory, 12, 62, 105));
-        this.addSlot(new Slot(playerInventory, 13, 80, 105));
-        this.addSlot(new Slot(playerInventory, 14, 98, 105));
-        this.addSlot(new Slot(playerInventory, 15, 116, 105));
-        this.addSlot(new Slot(playerInventory, 16, 134, 105));
-        this.addSlot(new Slot(playerInventory, 17, 152, 105));
-
-        // 大背包 - 第二排 (Y=123)
-        this.addSlot(new Slot(playerInventory, 18, 8, 123));
-        this.addSlot(new Slot(playerInventory, 19, 26, 123));
-        this.addSlot(new Slot(playerInventory, 20, 44, 123));
-        this.addSlot(new Slot(playerInventory, 21, 62, 123));
-        this.addSlot(new Slot(playerInventory, 22, 80, 123));
-        this.addSlot(new Slot(playerInventory, 23, 98, 123));
-        this.addSlot(new Slot(playerInventory, 24, 116, 123));
-        this.addSlot(new Slot(playerInventory, 25, 134, 123));
-        this.addSlot(new Slot(playerInventory, 26, 152, 123));
-
-        // 大背包 - 第三排 (Y=141)
-        this.addSlot(new Slot(playerInventory, 27, 8, 141));
-        this.addSlot(new Slot(playerInventory, 28, 26, 141));
-        this.addSlot(new Slot(playerInventory, 29, 44, 141));
-        this.addSlot(new Slot(playerInventory, 30, 62, 141));
-        this.addSlot(new Slot(playerInventory, 31, 80, 141));
-        this.addSlot(new Slot(playerInventory, 32, 98, 141));
-        this.addSlot(new Slot(playerInventory, 33, 116, 141));
-        this.addSlot(new Slot(playerInventory, 34, 134, 141));
-        this.addSlot(new Slot(playerInventory, 35, 152, 141));
-
-        // 快捷栏 (Y=163)
-        this.addSlot(new Slot(playerInventory, 0, 8, 163));
-        this.addSlot(new Slot(playerInventory, 1, 26, 163));
-        this.addSlot(new Slot(playerInventory, 2, 44, 163));
-        this.addSlot(new Slot(playerInventory, 3, 62, 163));
-        this.addSlot(new Slot(playerInventory, 4, 80, 163));
-        this.addSlot(new Slot(playerInventory, 5, 98, 163));
-        this.addSlot(new Slot(playerInventory, 6, 116, 163));
-        this.addSlot(new Slot(playerInventory, 7, 134, 163));
-        this.addSlot(new Slot(playerInventory, 8, 152, 163));
-    }
-
-    public TerminalMenu(int containerId, Inventory playerInventory, FriendlyByteBuf extraData) {
-        this(containerId, playerInventory, playerInventory.player.getMainHandItem());
-    }
-
-    public void setFrequency(int slotIndex, ItemStack stack) {
-        if (stack.isEmpty()) {
-            this.container.setItem(slotIndex, ItemStack.EMPTY);
-        } else {
-            ItemStack ghost = stack.copy();
-            ghost.setCount(1); 
-            this.container.setItem(slotIndex, ghost);
+        if (selectedSlot != -1) {
+            Slot slot = this.menu.slots.get(selectedSlot);
+            guiGraphics.fill(this.leftPos + slot.x, this.topPos + slot.y, this.leftPos + slot.x + 16, this.topPos + slot.y + 16, 0x88FFFFFF);
         }
-        this.broadcastChanges(); 
+
+        for (int i = 0; i < 2; i++) {
+            Slot slot = this.menu.slots.get(i);
+            if (this.isHovering(slot.x, slot.y, 16, 16, mouseX, mouseY)) {
+                guiGraphics.renderTooltip(this.font, Component.literal("频率 " + (i + 1)), mouseX, mouseY);
+            }
+        }
     }
 
     @Override
-    public void removed(Player player) {
-        super.removed(player);
-        CustomData customData = terminalStack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
-        CompoundTag tag = customData.copyTag();
-
-        if (!this.container.getItem(0).isEmpty()) tag.put("freq1", this.container.getItem(0).save(player.registryAccess()));
-        else tag.remove("freq1");
-        
-        if (!this.container.getItem(1).isEmpty()) tag.put("freq2", this.container.getItem(1).save(player.registryAccess()));
-        else tag.remove("freq2");
-
-        terminalStack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
-    }
-
-    @Override
-    public boolean stillValid(Player player) { return true; }
-
-    @Override
-    public ItemStack quickMoveStack(Player player, int index) { return ItemStack.EMPTY; }
-
-    public ItemStack getTerminalStack() {
-        return this.terminalStack;
+    protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+        Component titleText = this.getTitle();
+        guiGraphics.drawString(this.font, titleText, 6, 3, 0xFFFF00, true);
     }
 }
