@@ -12,7 +12,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 
 public class TerminalMenu extends AbstractContainerMenu {
-    private final SimpleContainer container;
+    public final SimpleContainer container; // 改成 public 让 Screen 读取
     private final ItemStack terminalStack;
     public int currentRange = 2; 
 
@@ -95,23 +95,6 @@ public class TerminalMenu extends AbstractContainerMenu {
             this.container.setItem(slotIndex, ghost);
         }
         this.broadcastChanges(); 
-    }
-
-    public void saveAll(Player player) {
-        CustomData customData = terminalStack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
-        CompoundTag tag = customData.copyTag();
-        tag.putInt("range", this.currentRange);
-        if (!this.container.getItem(0).isEmpty()) tag.put("freq1", this.container.getItem(0).save(player.registryAccess()));
-        else tag.remove("freq1");
-        if (!this.container.getItem(1).isEmpty()) tag.put("freq2", this.container.getItem(1).save(player.registryAccess()));
-        else tag.remove("freq2");
-        terminalStack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
-    }
-
-    @Override
-    public void removed(Player player) {
-        super.removed(player);
-        this.saveAll(player); 
     }
 
     @Override
