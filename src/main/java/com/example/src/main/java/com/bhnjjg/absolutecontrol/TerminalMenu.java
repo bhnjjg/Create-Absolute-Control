@@ -29,27 +29,28 @@ public class TerminalMenu extends AbstractContainerMenu {
             this.container.setItem(1, ItemStack.parseOptional(playerInventory.player.registryAccess(), tag.getCompound("freq2")));
         }
 
-        // 👇 频率 1（Y坐标往上提，防止偏下） 👇
-        this.addSlot(new Slot(container, 0, 35, 32) {
+        // 👇 频率 1：中心点对齐计算 (17,29) 👇
+        this.addSlot(new Slot(container, 0, 17, 29) {
             @Override public int getMaxStackSize() { return 1; }
             @Override public boolean mayPlace(ItemStack stack) { return false; }
         });
         
-        // 👇 频率 2 👇
-        this.addSlot(new Slot(container, 1, 65, 32) {
+        // 👇 频率 2：中心点对齐计算 (40,29) 👇
+        this.addSlot(new Slot(container, 1, 40, 29) {
             @Override public int getMaxStackSize() { return 1; }
             @Override public boolean mayPlace(ItemStack stack) { return false; }
         });
 
-        // 玩家背包（Y 调回 115）
+        // 👇 大背包：严格按照你给的起点 X=16, Y=103，步长 18 👇
         for (int i = 0; i < 3; ++i) {
             for (int j = 0; j < 9; ++j) {
-                this.addSlot(new Slot(playerInventory, j + i * 9 + 9, 8 + j * 18, 115 + i * 18));
+                this.addSlot(new Slot(playerInventory, j + i * 9 + 9, 16 + j * 18, 103 + i * 18));
             }
         }
-        // 快捷栏（Y 调回 173）
+        
+        // 👇 快捷栏：起点 X=16, Y=161，步长 18 👇
         for (int k = 0; k < 9; ++k) {
-            this.addSlot(new Slot(playerInventory, k, 8 + k * 18, 173));
+            this.addSlot(new Slot(playerInventory, k, 16 + k * 18, 161));
         }
     }
 
