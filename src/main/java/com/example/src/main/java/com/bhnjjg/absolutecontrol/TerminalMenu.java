@@ -1,50 +1,88 @@
 package com.bhnjjg.absolutecontrol;
 
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.Container;
-import net.minecraft.world.SimpleContainer;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.item.component.CustomData;
 
 public class TerminalMenu extends AbstractContainerMenu {
-    private final Container container;
+    private final SimpleContainer container;
+    private final ItemStack terminalStack;
 
-    public TerminalMenu(int containerId, Inventory playerInventory) {
-        this(containerId, playerInventory, new SimpleContainer(2));
-    }
-
-    public TerminalMenu(int containerId, Inventory playerInventory, FriendlyByteBuf extraData) {
-        this(containerId, playerInventory, new SimpleContainer(2));
-    }
-
-    public TerminalMenu(int containerId, Inventory playerInventory, Container container) {
+    public TerminalMenu(int containerId, Inventory playerInventory, ItemStack terminalStack) {
         super(AbsoluteControl.TERMINAL_MENU.get(), containerId);
-        this.container = container;
-        
-        // 👇 根据你画的图估算的槽位坐标
-        // 频率1框（偏左上）
+        this.terminalStack = terminalStack;
+        this.container = new SimpleContainer(2);
+
+        // 读取存好的分身
+        CustomData customData = terminalStack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
+        CompoundTag tag = customData.copyTag();
+        if (tag.contains("freq1")) {
+            this.container.setItem(0, ItemStack.parseOptional(playerInventory.player.registryAccess(), tag.getCompound("freq1")));
+        }
+        if (tag.contains("freq2")) {
+            this.container.setItem(1, ItemStack.parseOptional(playerInventory.player.registryAccess(), tag.getCompound("freq2")));
+        }
+
+        // 频率1槽位（恢复拖拽，限制1个）
         this.addSlot(new Slot(container, 0, 15, 25) {
             @Override public int getMaxStackSize() { return 1; }
         });
-        // 频率2框（紧挨着）
+        // 频率2槽位
         this.addSlot(new Slot(container, 1, 40, 25) {
             @Override public int getMaxStackSize() { return 1; }
         });
 
-        // 👇 玩家背包（对齐你画的灰色大框，9列3行）
+        // 玩家背包
         for (int i = 0; i < 3; ++i) {
             for (int j = 0; j < 9; ++j) {
-                // 起始坐标大概在 x=8, y=110 的位置
                 this.addSlot(new Slot(playerInventory, j + i * 9 + 9, 8 + j * 18, 110 + i * 18));
             }
         }
-        // 快捷栏（对齐最下面那一排）
         for (int k = 0; k < 9; ++k) {
             this.addSlot(new Slot(playerInventory, k, 8 + k * 18, 168));
         }
+    }
+
+    public TerminalMenu(int containerId, Inventory playerInventory, FriendlyByteBuf extraData) {
+        this(containerId, playerInventory, playerInventory.player.getMainHandItem());
+    }
+
+    // 👇 就是它！刚才报错说找不到的方法 👇
+    public void setFrequency(int slotIndex, ItemStack stack) {
+        if (stack.isEmpty()) {
+            this.container.setItem(slotIndex, ItemStack.EMPTY);
+        } else {
+            ItemStack ghost = stack.copy();
+            ghost.setCount(1); 
+            this.container.setItem(slotIndex, ghost);
+        }
+        this.broadcastChanges(); 
+    }
+
+    @Override
+    public void removed(Player player) {
+        super.removed(player);
+        CustomData customData = terminalStack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
+        CompoundTag tag = customData.copyTag();
+
+        if (!this.container.getItem(0).isEmpty()) {
+            tag.put("freq1", this.container.getItem(0).save(player.registryAccess()));
+        } else {
+            tag.remove("freq1");
+        }
+        if (!this.container.getItem(1).isEmpty()) {
+            tag.put("freq2", this.container.getItem(1).save(player.registryAccess()));
+        } else {
+            tag.remove("freq2");
+        }
+        terminalStack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
     }
 
     @Override
@@ -52,6 +90,6 @@ public class TerminalMenu extends AbstractContainerMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        return ItemStack.EMPTY;
+        return ItemStack.EMPTY; 
     }
 }
