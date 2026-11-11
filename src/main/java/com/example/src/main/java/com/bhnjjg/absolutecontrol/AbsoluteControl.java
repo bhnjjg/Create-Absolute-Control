@@ -21,15 +21,18 @@ public class AbsoluteControl {
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MODID);
     // 创造模式标签页注册器
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
-    
-    // 👇 新增：GUI 面板类型注册器 👇
+    // GUI 面板类型注册器
     public static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(Registries.MENU, MODID);
 
     // 注册终端物品
     public static final DeferredItem<Item> WIRELESS_TERMINAL = ITEMS.register("wireless_terminal", 
         () -> new WirelessTerminalItem(new Item.Properties()));
 
-    // 👇 新增：把 TerminalMenu 注册进去 👇
+    // 👇 新增：注册扳手物品 👇
+    public static final DeferredItem<Item> WRENCH = ITEMS.register("wrench", 
+        () -> new WrenchItem(new Item.Properties()));
+
+    // 注册 GUI 面板
     public static final DeferredHolder<MenuType<?>, MenuType<TerminalMenu>> TERMINAL_MENU = MENUS.register("terminal_menu",
         () -> IMenuTypeExtension.create(TerminalMenu::new));
 
@@ -38,13 +41,16 @@ public class AbsoluteControl {
         () -> CreativeModeTab.builder()
             .title(Component.translatable("itemGroup.absolute_control"))
             .icon(() -> new ItemStack(WIRELESS_TERMINAL.get()))
-            .displayItems((parameters, output) -> output.accept(WIRELESS_TERMINAL.get()))
+            .displayItems((parameters, output) -> {
+                output.accept(WIRELESS_TERMINAL.get());
+                output.accept(WRENCH.get()); // 👈 把扳手也放进去
+            })
             .build()
     );
 
     public AbsoluteControl(IEventBus modEventBus) {
         ITEMS.register(modEventBus);
         CREATIVE_MODE_TABS.register(modEventBus);
-        MENUS.register(modEventBus); // 👈 别漏了这行，把注册器绑定到总线
+        MENUS.register(modEventBus);
     }
 }
