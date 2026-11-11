@@ -20,7 +20,6 @@ public class TerminalMenu extends AbstractContainerMenu {
         this.terminalStack = terminalStack;
         this.container = new SimpleContainer(2);
 
-        // 读取存好的分身
         CustomData customData = terminalStack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
         CompoundTag tag = customData.copyTag();
         if (tag.contains("freq1")) {
@@ -30,21 +29,26 @@ public class TerminalMenu extends AbstractContainerMenu {
             this.container.setItem(1, ItemStack.parseOptional(playerInventory.player.registryAccess(), tag.getCompound("freq2")));
         }
 
-        // 频率1槽位（恢复拖拽，限制1个）
-        this.addSlot(new Slot(container, 0, 15, 25) {
+        // 👇 根据新图 (187x189) 精确定位频率槽位 👇
+        // 频率 1 框
+        this.addSlot(new Slot(container, 0, 18, 32) {
             @Override public int getMaxStackSize() { return 1; }
+            @Override public boolean mayPlace(ItemStack stack) { return false; } // 禁止拖拽
         });
-        // 频率2槽位
-        this.addSlot(new Slot(container, 1, 40, 25) {
+        // 频率 2 框
+        this.addSlot(new Slot(container, 1, 48, 32) {
             @Override public int getMaxStackSize() { return 1; }
+            @Override public boolean mayPlace(ItemStack stack) { return false; } // 禁止拖拽
         });
 
-        // 玩家背包
+        // 👇 对齐下方的大背包框 👇
+        // 玩家背包 (起始 X=8, Y=110)
         for (int i = 0; i < 3; ++i) {
             for (int j = 0; j < 9; ++j) {
                 this.addSlot(new Slot(playerInventory, j + i * 9 + 9, 8 + j * 18, 110 + i * 18));
             }
         }
+        // 快捷栏 (起始 Y=168)
         for (int k = 0; k < 9; ++k) {
             this.addSlot(new Slot(playerInventory, k, 8 + k * 18, 168));
         }
@@ -54,7 +58,6 @@ public class TerminalMenu extends AbstractContainerMenu {
         this(containerId, playerInventory, playerInventory.player.getMainHandItem());
     }
 
-    // 👇 就是它！刚才报错说找不到的方法 👇
     public void setFrequency(int slotIndex, ItemStack stack) {
         if (stack.isEmpty()) {
             this.container.setItem(slotIndex, ItemStack.EMPTY);
