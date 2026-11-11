@@ -29,13 +29,13 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         int x = (this.width - this.imageWidth) / 2;
         int y = (this.height - this.imageHeight) / 2;
 
-        // 输入框：再往左靠一点
-        this.rangeInput = new EditBox(this.font, x + 25, y + 70, 100, 15, Component.literal("范围"));
+        // 👈 输入框继续左移
+        this.rangeInput = new EditBox(this.font, x + 15, y + 60, 100, 15, Component.literal("范围"));
         this.rangeInput.setMaxLength(3);
         this.rangeInput.setValue("2");
         this.rangeInput.setFilter(text -> text.matches("\\d*"));
         this.rangeInput.setBordered(false);
-        this.rangeInput.setTextColor(0x404040); // 改回深灰色，免得看不见
+        this.rangeInput.setTextColor(0x404040); 
         this.addRenderableWidget(this.rangeInput);
     }
 
@@ -45,8 +45,8 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         double localY = mouseY - this.topPos;
 
         if (button == 0) {
-            // 1. 打勾按钮区域 (根据你的图微调)
-            if (localX >= 145 && localX <= 170 && localY >= 65 && localY <= 90) {
+            // 打勾按钮区域
+            if (localX >= 140 && localX <= 170 && localY >= 55 && localY <= 80) {
                 if (this.minecraft != null && this.minecraft.player != null) {
                     this.minecraft.player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 0.5F, 1.0F);
                     this.minecraft.player.sendSystemMessage(Component.literal("§a[绝对控制] 保存成功！"));
@@ -54,17 +54,16 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
                 return true; 
             }
 
-            // 2. 频率槽位判定 👇 核心：直接用物理槽位坐标判定！ 👇
+            // 频率槽位判定（直接读后台物理槽位）
             for (int i = 0; i < 2; i++) {
                 Slot slot = this.menu.slots.get(i);
-                // 只要鼠标在这个物理槽位内，就认为点中了！
                 if (this.isHovering(slot.x, slot.y, 16, 16, mouseX, mouseY)) {
                     toggleSelection(i);
                     return true;
                 }
             }
 
-            // 3. 背包判定：如果处于选中状态，点击背包区域
+            // 背包判定
             if (selectedSlot != -1) {
                 for (Slot slot : this.menu.slots) {
                     if (slot.index >= 2 && this.isHovering(slot.x, slot.y, 16, 16, mouseX, mouseY)) {
@@ -75,11 +74,10 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
                                 this.minecraft.player.playSound(SoundEvents.ITEM_PICKUP, 0.5F, 1.5F);
                             }
                         }
-                        selectedSlot = -1; // 完成分身，退出选中
+                        selectedSlot = -1; 
                         return true; 
                     }
                 }
-                // 如果点到了空地，也取消选中
                 selectedSlot = -1; 
                 return true;
             }
@@ -107,7 +105,6 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
         
-        // 画选中高亮框
         if (selectedSlot != -1) {
             Slot slot = this.menu.slots.get(selectedSlot);
             guiGraphics.fill(this.leftPos + slot.x, this.topPos + slot.y, this.leftPos + slot.x + 16, this.topPos + slot.y + 16, 0x88FFFFFF);
@@ -118,7 +115,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
         Component titleText = this.getTitle();
         int textWidth = this.font.width(titleText);
-        // 改回深色，如果还是看不见，就改回 0x404040 或者根据你的背景用 0xFFFFFF
-        guiGraphics.drawString(this.font, titleText, (this.imageWidth - textWidth) / 2, 12, 0x404040, false);
+        // 👈 改成金色带阴影，绝对能看到！
+        guiGraphics.drawString(this.font, titleText, (this.imageWidth - textWidth) / 2, 12, 0xFFFF00, true);
     }
 }
