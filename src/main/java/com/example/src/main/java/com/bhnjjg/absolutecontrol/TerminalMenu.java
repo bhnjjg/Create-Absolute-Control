@@ -29,27 +29,19 @@ public class TerminalMenu extends AbstractContainerMenu {
             this.container.setItem(1, ItemStack.parseOptional(playerInventory.player.registryAccess(), tag.getCompound("freq2")));
         }
 
-        // 👇 终极绝杀：重写 Slot 的渲染，去除原版黑框 👇
-        // 坐标 (35, 45) 和 (65, 45) 是相对 187x189 图算出来的，你可以根据实际微调
-        this.addSlot(new Slot(container, 0, 35, 45) {
+        // 频率 1 槽位
+        this.addSlot(new Slot(container, 0, 18, 32) {
             @Override public int getMaxStackSize() { return 1; }
-            @Override public boolean mayPlace(ItemStack stack) { return false; } // 禁止直接拖拽
-            @Override
-            public void render(net.minecraft.client.gui.GuiGraphics guiGraphics, int index) {
-                // 强行覆盖，什么都不画，彻底干掉原版背景！
-            }
+            @Override public boolean mayPlace(ItemStack stack) { return false; } // 禁止拖拽放入
         });
         
-        this.addSlot(new Slot(container, 1, 65, 45) {
+        // 频率 2 槽位
+        this.addSlot(new Slot(container, 1, 48, 32) {
             @Override public int getMaxStackSize() { return 1; }
-            @Override public boolean mayPlace(ItemStack stack) { return false; }
-            @Override
-            public void render(net.minecraft.client.gui.GuiGraphics guiGraphics, int index) {
-                // 强行覆盖，什么都不画，彻底干掉原版背景！
-            }
+            @Override public boolean mayPlace(ItemStack stack) { return false; } // 禁止拖拽放入
         });
 
-        // 玩家背包 (原版标准尺寸)
+        // 玩家背包
         for (int i = 0; i < 3; ++i) {
             for (int j = 0; j < 9; ++j) {
                 this.addSlot(new Slot(playerInventory, j + i * 9 + 9, 8 + j * 18, 110 + i * 18));
@@ -77,8 +69,8 @@ public class TerminalMenu extends AbstractContainerMenu {
     }
 
     @Override
-    public void removed(Player player) {
-        super.remove(player);
+    public void removed(Player player) {  // 👈 修复：加了 d
+        super.removed(player);            // 👈 修复：加了 d
         CustomData customData = terminalStack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
         CompoundTag tag = customData.copyTag();
 
