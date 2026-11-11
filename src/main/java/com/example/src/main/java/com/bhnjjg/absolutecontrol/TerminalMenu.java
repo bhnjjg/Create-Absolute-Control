@@ -14,6 +14,9 @@ import net.minecraft.world.item.component.CustomData;
 public class TerminalMenu extends AbstractContainerMenu {
     private final SimpleContainer container;
     private final ItemStack terminalStack;
+    
+    // 👇 新增：记录当前输入的范围，默认是2 👇
+    public int currentRange = 2; 
 
     public TerminalMenu(int containerId, Inventory playerInventory, ItemStack terminalStack) {
         super(AbsoluteControl.TERMINAL_MENU.get(), containerId);
@@ -22,6 +25,12 @@ public class TerminalMenu extends AbstractContainerMenu {
 
         CustomData customData = terminalStack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
         CompoundTag tag = customData.copyTag();
+        
+        // 读取范围
+        if (tag.contains("range")) {
+            this.currentRange = tag.getInt("range");
+        }
+        // 读取频率
         if (tag.contains("freq1")) {
             this.container.setItem(0, ItemStack.parseOptional(playerInventory.player.registryAccess(), tag.getCompound("freq1")));
         }
@@ -29,7 +38,7 @@ public class TerminalMenu extends AbstractContainerMenu {
             this.container.setItem(1, ItemStack.parseOptional(playerInventory.player.registryAccess(), tag.getCompound("freq2")));
         }
 
-        // 👇 频率槽位：X和Y各减1 👇
+        // 频率槽位
         this.addSlot(new Slot(container, 0, 16, 28) {
             @Override public int getMaxStackSize() { return 1; }
             @Override public boolean mayPlace(ItemStack stack) { return false; }
@@ -99,11 +108,12 @@ public class TerminalMenu extends AbstractContainerMenu {
         this.broadcastChanges(); 
     }
 
-    @Override
-    public void removed(Player player) {
-        super.removed(player);
+    // 👇 终极保存逻辑：保存范围 + 频率1 + 频率2 👇
+    public void saveAll(Player player) {
         CustomData customData = terminalStack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
         CompoundTag tag = customData.copyTag();
+        
+        tag.putInt("range", this.currentRange);
 
         if (!this.container.getItem(0).isEmpty()) tag.put("freq1", this.container.getItem(0).save(player.registryAccess()));
         else tag.remove("freq1");
@@ -112,6 +122,12 @@ public class TerminalMenu extends AbstractContainerMenu {
         else tag.remove("freq2");
 
         terminalStack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+    }
+
+    @Override
+    public void removed(Player player) {
+        super.removed(player);
+        this.saveAll(player); // 关闭界面时必定触发保存
     }
 
     @Override
