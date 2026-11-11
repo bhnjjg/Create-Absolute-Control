@@ -1,9 +1,9 @@
 package com.bhnjjg.absolutecontrol;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
@@ -14,7 +14,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.nbt.CompoundTag;
 
 public class WirelessTerminalItem extends Item {
@@ -28,7 +27,6 @@ public class WirelessTerminalItem extends Item {
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack itemstack = player.getItemInHand(hand);
         if (!level.isClientSide) {
-            // 直接打开面板，不用非得绑定方块了，因为是要先配置
             player.openMenu(new SimpleMenuProvider(
                     (containerId, playerInventory, p) -> new TerminalMenu(containerId, playerInventory, itemstack),
                     Component.literal("无线红石信号终端")
@@ -37,31 +35,32 @@ public class WirelessTerminalItem extends Item {
         return InteractionResultHolder.sidedSuccess(itemstack, level.isClientSide());
     }
 
-    // 潜行+右键方块，把它贴上去
+    // 潜行+右键方块，隐形绑定并消耗物品
     @Override
     public InteractionResult useOn(UseOnContext context) {
         Level level = context.getLevel();
         Player player = context.getPlayer();
         ItemStack itemStack = context.getItemInHand();
         BlockPos pos = context.getClickedPos();
-        Direction face = context.getClickedFace();
 
         if (player == null) return InteractionResult.PASS;
 
         if (player.isShiftKeyDown()) {
-            if (!level.isClientSide) {
-                // 把贴片放上去（这里先临时用原版按钮代替，为了测试）
-                BlockPos placePos = pos.relative(face);
-                level.setBlockAndUpdate(placePos, Blocks.STONE_BUTTON.defaultBlockState()
-                        .setValue(net.minecraft.world.level.block.ButtonBlock.FACING, face)
-                        .setValue(net.minecraft.world.level.block.ButtonBlock.FACE, 
-                                face == Direction.UP ? net.minecraft.world.level.block.state.properties.AttachFace.FLOOR : 
-                                face == Direction.DOWN ? net.minecraft.world.level.block.state.properties.AttachFace.CEILING : 
-                                net.minecraft.world.level.block.state.properties.AttachFace.WALL));
+            if (!level.isClientSide && level instanceof ServerLevel serverLevel) {
+                // 获取世界的上帝笔记本
+                TerminalData data = TerminalData.get(serverLevel);
+                
+                // 获取手里的配置数据
+                CustomData customData = itemStack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
+                CompoundTag tag = customData.copyTag();
+                
+                // 记录坐标和配置
+                data.boundTerminals.put(pos, tag);
+                data.setDirty(); // 告诉游戏保存数据
                 
                 // 消耗终端物品
                 itemStack.shrink(1);
-                player.sendSystemMessage(Component.literal("§b[绝对控制] 终端已安装！用扳手可以拆除。"));
+                player.sendSystemMessage(Component.literal("§b[绝对控制] 终端已隐形绑定至该方块！"));
             }
             return InteractionResult.SUCCESS;
         }
