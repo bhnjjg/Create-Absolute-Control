@@ -34,15 +34,12 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         int y = (this.height - this.imageHeight) / 2;
 
         this.rangeInput = new EditBox(this.font, x + 28, y + 67, 100, 12, Component.literal("范围"));
-        // 👇 解除输入长度限制，改为10个字符 👇
-        this.rangeInput.setMaxLength(10);
-        // 👇 读取真实的保存数据并显示 👇
-        this.rangeInput.setValue(String.valueOf(((TerminalMenu)this.menu).currentRange));
+        this.rangeInput.setMaxLength(10); // 解除字数限制
+        this.rangeInput.setValue(String.valueOf(((TerminalMenu)this.menu).currentRange)); // 读取显示
         this.rangeInput.setFilter(text -> text.matches("\\d*"));
         this.rangeInput.setBordered(false); 
         this.rangeInput.setTextColor(0x000000); 
-        // 👇 终极修复重影：关闭阴影！ 👇
-        this.rangeInput.setShadow(false);
+        // 🚨 1.21.1 删除了 setShadow 方法，所以这行只能删掉啦
         this.rangeInput.setCanLoseFocus(true); 
         this.rangeInput.setCursorPosition(0); 
         this.rangeInput.setHighlightPos(0);
@@ -55,27 +52,24 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         double localY = mouseY - this.topPos;
 
         if (button == 0) {
-            // 👇 打勾按钮区域 👇
+            // 打勾按钮区域
             if (localX >= 135 && localX <= 165 && localY >= 58 && localY <= 85) {
                 if (this.minecraft != null && this.minecraft.player != null) {
                     String value = this.rangeInput.getValue();
                     int range = 2;
-                    // 👇 小于2直接强制变2 👇
                     try { range = Integer.parseInt(value); } catch (Exception ignored) {}
-                    if (range < 2) range = 2;
+                    if (range < 2) range = 2; // 小于2强制变2
                     
                     ((TerminalMenu) this.menu).currentRange = range;
                     
                     this.minecraft.player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 0.5F, 1.0F);
                     this.minecraft.player.sendSystemMessage(Component.literal("§a[绝对控制] 配置已保存！范围: " + range));
                     
-                    // 👇 点击打勾直接关闭界面 👇
-                    this.minecraft.player.closeContainer();
+                    this.minecraft.player.closeContainer(); // 自动关闭
                 }
                 return true; 
             }
 
-            // 频率槽位
             for (int i = 0; i < 2; i++) {
                 Slot slot = this.menu.slots.get(i);
                 if (this.isHovering(slot.x, slot.y, 16, 16, mouseX, mouseY)) {
@@ -84,7 +78,6 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
                 }
             }
 
-            // 背包判定
             if (selectedSlot != -1) {
                 for (Slot slot : this.menu.slots) {
                     if (slot.index >= 2 && this.isHovering(slot.x, slot.y, 16, 16, mouseX, mouseY)) {
@@ -106,7 +99,6 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
-    // 👇 核心补丁：如果你按了ESC退出，也自动把数字存起来！ 👇
     @Override
     public void removed() {
         super.removed();
