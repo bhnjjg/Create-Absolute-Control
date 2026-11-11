@@ -9,6 +9,7 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -31,9 +32,7 @@ public class AbsoluteControl {
         () -> CreativeModeTab.builder()
             .title(Component.translatable("itemGroup.absolute_control"))
             .icon(() -> new ItemStack(WIRELESS_TERMINAL.get()))
-            .displayItems((parameters, output) -> {
-                output.accept(WIRELESS_TERMINAL.get());
-            })
+            .displayItems((parameters, output) -> output.accept(WIRELESS_TERMINAL.get()))
             .build()
     );
 
@@ -41,5 +40,11 @@ public class AbsoluteControl {
         ITEMS.register(modEventBus);
         CREATIVE_MODE_TABS.register(modEventBus);
         MENUS.register(modEventBus);
+        // 👇 注册网络包 👇
+        modEventBus.addListener(this::registerPayloads);
+    }
+
+    private void registerPayloads(final RegisterPayloadHandlersEvent event) {
+        event.registrar("1").playToServer(TerminalSyncPacket.TYPE, TerminalSyncPacket.STREAM_CODEC, TerminalSyncPacket::handle);
     }
 }
