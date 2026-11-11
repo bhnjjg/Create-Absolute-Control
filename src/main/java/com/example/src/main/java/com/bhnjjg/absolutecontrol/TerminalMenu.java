@@ -29,21 +29,17 @@ public class TerminalMenu extends AbstractContainerMenu {
             this.container.setItem(1, ItemStack.parseOptional(playerInventory.player.registryAccess(), tag.getCompound("freq2")));
         }
 
-        // 频率槽位
-        this.addSlot(new Slot(container, 0, 17, 29) {
+        // 👇 频率槽位：X和Y各减1 👇
+        this.addSlot(new Slot(container, 0, 16, 28) {
             @Override public int getMaxStackSize() { return 1; }
             @Override public boolean mayPlace(ItemStack stack) { return false; }
         });
-        this.addSlot(new Slot(container, 1, 40, 29) {
+        this.addSlot(new Slot(container, 1, 39, 28) {
             @Override public int getMaxStackSize() { return 1; }
             @Override public boolean mayPlace(ItemStack stack) { return false; }
         });
 
-        // ==========================================================
-        // 👇 修复：整体往上调 1 像素 (105->104, 123->122, 141->140, 163->162) 👇
-        // ==========================================================
-        
-        // 大背包 - 第一排
+        // 大背包 - 第一排 (Y=104)
         this.addSlot(new Slot(playerInventory, 9, 8, 104));
         this.addSlot(new Slot(playerInventory, 10, 26, 104));
         this.addSlot(new Slot(playerInventory, 11, 44, 104));
@@ -54,7 +50,7 @@ public class TerminalMenu extends AbstractContainerMenu {
         this.addSlot(new Slot(playerInventory, 16, 134, 104));
         this.addSlot(new Slot(playerInventory, 17, 152, 104));
 
-        // 大背包 - 第二排
+        // 大背包 - 第二排 (Y=122)
         this.addSlot(new Slot(playerInventory, 18, 8, 122));
         this.addSlot(new Slot(playerInventory, 19, 26, 122));
         this.addSlot(new Slot(playerInventory, 20, 44, 122));
@@ -65,7 +61,7 @@ public class TerminalMenu extends AbstractContainerMenu {
         this.addSlot(new Slot(playerInventory, 25, 134, 122));
         this.addSlot(new Slot(playerInventory, 26, 152, 122));
 
-        // 大背包 - 第三排
+        // 大背包 - 第三排 (Y=140)
         this.addSlot(new Slot(playerInventory, 27, 8, 140));
         this.addSlot(new Slot(playerInventory, 28, 26, 140));
         this.addSlot(new Slot(playerInventory, 29, 44, 140));
@@ -76,7 +72,7 @@ public class TerminalMenu extends AbstractContainerMenu {
         this.addSlot(new Slot(playerInventory, 34, 134, 140));
         this.addSlot(new Slot(playerInventory, 35, 152, 140));
 
-        // 快捷栏
+        // 快捷栏 (Y=162)
         this.addSlot(new Slot(playerInventory, 0, 8, 162));
         this.addSlot(new Slot(playerInventory, 1, 26, 162));
         this.addSlot(new Slot(playerInventory, 2, 44, 162));
