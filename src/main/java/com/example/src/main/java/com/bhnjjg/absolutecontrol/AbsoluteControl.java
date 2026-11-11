@@ -1,26 +1,50 @@
 package com.bhnjjg.absolutecontrol;
 
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
-import net.neoforged.neoforge.registries.DeferredRegister;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.world.item.Item;
+import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
+import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
-import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.registries.DeferredRegister;
 
 @Mod(AbsoluteControl.MODID)
 public class AbsoluteControl {
     public static final String MODID = "absolute_control";
 
-    // 创建一个物品注册器
+    // 物品注册器
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MODID);
+    // 创造模式标签页注册器
+    public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
+    
+    // 👇 新增：GUI 面板类型注册器 👇
+    public static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(Registries.MENU, MODID);
 
-    // 注册我们的“无线红石信号终端”物品
+    // 注册终端物品
     public static final DeferredItem<Item> WIRELESS_TERMINAL = ITEMS.register("wireless_terminal", 
         () -> new WirelessTerminalItem(new Item.Properties()));
 
+    // 👇 新增：把 TerminalMenu 注册进去 👇
+    public static final DeferredHolder<MenuType<?>, MenuType<TerminalMenu>> TERMINAL_MENU = MENUS.register("terminal_menu",
+        () -> IMenuTypeExtension.create(TerminalMenu::new));
+
+    // 注册创造模式标签页
+    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> ABSOLUTE_CONTROL_TAB = CREATIVE_MODE_TABS.register("absolute_control_tab",
+        () -> CreativeModeTab.builder()
+            .title(Component.translatable("itemGroup.absolute_control"))
+            .icon(() -> new ItemStack(WIRELESS_TERMINAL.get()))
+            .displayItems((parameters, output) -> output.accept(WIRELESS_TERMINAL.get()))
+            .build()
+    );
+
     public AbsoluteControl(IEventBus modEventBus) {
-        // 把物品注册器绑定到模组总线上
         ITEMS.register(modEventBus);
+        CREATIVE_MODE_TABS.register(modEventBus);
+        MENUS.register(modEventBus); // 👈 别漏了这行，把注册器绑定到总线
     }
 }
