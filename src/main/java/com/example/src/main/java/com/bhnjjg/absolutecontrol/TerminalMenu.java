@@ -29,29 +29,26 @@ public class TerminalMenu extends AbstractContainerMenu {
             this.container.setItem(1, ItemStack.parseOptional(playerInventory.player.registryAccess(), tag.getCompound("freq2")));
         }
 
-        // 👇 频率 1 和 2（这俩你没说错，保持不变） 👇
-        this.addSlot(new Slot(container, 0, 18, 30) {
+        // 👇 频率 1 和频率 2 槽位 👇
+        this.addSlot(new Slot(container, 0, 17, 29) {
             @Override public int getMaxStackSize() { return 1; }
             @Override public boolean mayPlace(ItemStack stack) { return false; }
         });
-        this.addSlot(new Slot(container, 1, 41, 30) {
+        this.addSlot(new Slot(container, 1, 40, 29) {
             @Override public int getMaxStackSize() { return 1; }
             @Override public boolean mayPlace(ItemStack stack) { return false; }
         });
 
-        // 👇 大背包和快捷栏的“终极可调参数” 👇
-        // 如果背包还是偏，你只需要改这三个数字：START_X, START_Y 和 STEP
-        int START_X = 15; // 最左边格子的X
-        int START_Y = 103; // 第一排格子的Y
-        int STEP = 19; // 👈 格子间距（如果是18就改18，如果是20就改20）
-
+        // 👇 大背包（物品栏）：起点 X=9, Y=106，间距19 👇
         for (int i = 0; i < 3; ++i) {
             for (int j = 0; j < 9; ++j) {
-                this.addSlot(new Slot(playerInventory, j + i * 9 + 9, START_X + j * STEP, START_Y + i * STEP));
+                this.addSlot(new Slot(playerInventory, j + i * 9 + 9, 9 + j * 19, 106 + i * 19));
             }
         }
+        
+        // 👇 快捷栏：起点 X=9, Y=151，间距19 👇
         for (int k = 0; k < 9; ++k) {
-            this.addSlot(new Slot(playerInventory, k, START_X + k * STEP, 161)); // 快捷栏Y=161
+            this.addSlot(new Slot(playerInventory, k, 9 + k * 19, 151));
         }
     }
 
