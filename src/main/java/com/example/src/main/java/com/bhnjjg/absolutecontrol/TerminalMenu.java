@@ -29,27 +29,30 @@ public class TerminalMenu extends AbstractContainerMenu {
             this.container.setItem(1, ItemStack.parseOptional(playerInventory.player.registryAccess(), tag.getCompound("freq2")));
         }
 
-        // 频率 1 槽位
-        this.addSlot(new Slot(container, 0, 18, 32) {
+        // 👇 频率槽位 👇
+        this.addSlot(new Slot(container, 0, 35, 42) {
             @Override public int getMaxStackSize() { return 1; }
-            @Override public boolean mayPlace(ItemStack stack) { return false; } // 禁止拖拽放入
+            @Override public boolean mayPlace(ItemStack stack) { return false; }
+            @Override
+            public void render(net.minecraft.client.gui.GuiGraphics guiGraphics, int index) {}
         });
         
-        // 频率 2 槽位
-        this.addSlot(new Slot(container, 1, 48, 32) {
+        this.addSlot(new Slot(container, 1, 65, 42) {
             @Override public int getMaxStackSize() { return 1; }
-            @Override public boolean mayPlace(ItemStack stack) { return false; } // 禁止拖拽放入
+            @Override public boolean mayPlace(ItemStack stack) { return false; }
+            @Override
+            public void render(net.minecraft.client.gui.GuiGraphics guiGraphics, int index) {}
         });
 
-        // 玩家背包
+        // 玩家背包（Y 改到 115）
         for (int i = 0; i < 3; ++i) {
             for (int j = 0; j < 9; ++j) {
-                this.addSlot(new Slot(playerInventory, j + i * 9 + 9, 8 + j * 18, 110 + i * 18));
+                this.addSlot(new Slot(playerInventory, j + i * 9 + 9, 8 + j * 18, 115 + i * 18));
             }
         }
-        // 快捷栏
+        // 快捷栏（Y 改到 173）
         for (int k = 0; k < 9; ++k) {
-            this.addSlot(new Slot(playerInventory, k, 8 + k * 18, 168));
+            this.addSlot(new Slot(playerInventory, k, 8 + k * 18, 173));
         }
     }
 
@@ -69,8 +72,8 @@ public class TerminalMenu extends AbstractContainerMenu {
     }
 
     @Override
-    public void removed(Player player) {  // 👈 修复：加了 d
-        super.removed(player);            // 👈 修复：加了 d
+    public void removed(Player player) {
+        super.removed(player);
         CustomData customData = terminalStack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
         CompoundTag tag = customData.copyTag();
 
