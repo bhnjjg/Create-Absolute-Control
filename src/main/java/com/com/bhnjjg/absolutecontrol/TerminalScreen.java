@@ -9,9 +9,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.world.item.component.CustomData;
-import net.minecraft.nbt.CompoundTag;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
     private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath("absolute_control", "textures/gui/terminal_gui.png");
@@ -39,8 +37,6 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         this.rangeInput.setBordered(false); 
         this.rangeInput.setTextColor(0x000000); 
         this.rangeInput.setCanLoseFocus(true); 
-        this.rangeInput.setCursorPosition(0); 
-        this.rangeInput.setHighlightPos(0);
         this.addRenderableWidget(this.rangeInput);
     }
 
@@ -52,14 +48,8 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         if (button == 0) {
             if (localX >= 135 && localX <= 165 && localY >= 58 && localY <= 85) {
                 if (this.minecraft != null && this.minecraft.player != null) {
-                    String value = this.rangeInput.getValue();
-                    int range = 2;
-                    try { range = Integer.parseInt(value); } catch (Exception ignored) {}
-                    if (range < 2) range = 2;
-                    ((TerminalMenu) this.menu).currentRange = range;
-                    this.minecraft.player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 0.5F, 1.0F);
-                    this.minecraft.player.sendSystemMessage(Component.literal("§a[绝对控制] 配置已保存！范围: " + range));
-                    this.minecraft.player.closeContainer(); 
+                    // 👇 发包给服务端并关闭 👇
+                    sendPacketAndClose();
                 }
                 return true; 
             }
@@ -93,16 +83,30 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
+    // 当玩家按 ESC 或者界面临时关闭时触发
     @Override
-    public void removed() {
-        super.removed();
-        if (this.rangeInput != null) {
-            String value = this.rangeInput.getValue();
-            int range = 2;
-            try { range = Integer.parseInt(value); } catch (Exception ignored) {}
-            if (range < 2) range = 2;
-            ((TerminalMenu) this.menu).currentRange = range;
-        }
+    public void onClose() {
+        sendPacketAndClose();
+        super.onClose();
+    }
+
+    // 统一发包函数
+    private void sendPacketAndClose() {
+        if (this.minecraft == null || this.minecraft.player == null) return;
+        
+        String value = this.rangeInput.getValue();
+        int range = 2;
+        try { range = Integer.parseInt(value); } catch (Exception ignored) {}
+        if (range < 2) range = 2;
+
+        ItemStack f1 = ((TerminalMenu)this.menu).container.getItem(0).copy();
+        ItemStack f2 = ((TerminalMenu)this.menu).container.getItem(1).copy();
+
+        PacketDistributor.sendToServer(new TerminalSyncPacket(range, f1, f2));
+        
+        this.minecraft.player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 0.5F, 1.0F);
+        this.minecraft.player.sendSystemMessage(Component.literal("§a[绝对控制] 配置已同步保存！范围: " + range));
+        this.minecraft.player.closeContainer();
     }
 
     private void toggleSelection(int slotIndex) {
