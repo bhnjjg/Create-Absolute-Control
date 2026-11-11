@@ -7,13 +7,14 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 
 public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
-    // 这里指向你画的那张图
+    // 👇 确保这里是 absolute_control，千万不要是 minecraft
     private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath("absolute_control", "textures/gui/terminal_gui.png");
 
     public TerminalScreen(TerminalMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
         this.imageWidth = 176;
         this.imageHeight = 166;
+        this.titleLabelX = -1000; // 隐藏原版左上角的字
     }
 
     @Override
@@ -25,22 +26,27 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
     }
 
     @Override
+    protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+        // 强行把标题画在中间黄色区域（y+8 的位置）
+        Component titleText = this.getTitle();
+        int textWidth = this.font.width(titleText);
+        guiGraphics.drawString(this.font, titleText, (this.imageWidth - textWidth) / 2, 8, 0xFFFFFF, true);
+        
+        // 画物品栏的字
+        guiGraphics.drawString(this.font, this.playerInventoryTitle, 8, this.imageHeight - 96 + 2, 0xFFFFFF, false);
+    }
+
+    @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
         
-        int x = (this.width - this.imageWidth) / 2;
-        int y = (this.height - this.imageHeight) / 2;
-        
-        // 悬停提示（对应咱们在 Menu 里设置的坐标：20,20 和 44,20）
-        // 只有槽位没有物品的时候，才显示“频率 1”
-if (this.menu.slots.get(0).getItem().isEmpty() && isHovering(20, 20, 18, 18, mouseX, mouseY)) {
-    guiGraphics.renderTooltip(this.font, Component.literal("频率 1"), mouseX, mouseY);
-} 
-// 只有槽位没有物品的时候，才显示“频率 2”
-else if (this.menu.slots.get(1).getItem().isEmpty() && isHovering(44, 20, 18, 18, mouseX, mouseY)) {
-    guiGraphics.renderTooltip(this.font, Component.literal("频率 2"), mouseX, mouseY);
-}
+        // 悬停提示
+        if (isHovering(20, 20, 18, 18, mouseX, mouseY)) {
+            guiGraphics.renderTooltip(this.font, Component.literal("频率 1"), mouseX, mouseY);
+        } else if (isHovering(44, 20, 18, 18, mouseX, mouseY)) {
+            guiGraphics.renderTooltip(this.font, Component.literal("频率 2"), mouseX, mouseY);
+        }
         
         this.renderTooltip(guiGraphics, mouseX, mouseY);
     }
