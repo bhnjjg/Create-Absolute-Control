@@ -2,7 +2,7 @@ package com.bhnjjg.absolutecontrol;
 
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf; // 👈 核心修复：换成注册表缓冲区
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -14,7 +14,9 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 public record TerminalSyncPacket(int range, ItemStack freq1, ItemStack freq2) implements CustomPacketPayload {
     public static final Type<TerminalSyncPacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(AbsoluteControl.MODID, "sync"));
-    public static final StreamCodec<FriendlyByteBuf, TerminalSyncPacket> STREAM_CODEC = StreamCodec.composite(
+    
+    // 👇 泛型从 FriendlyByteBuf 改为 RegistryFriendlyByteBuf 👇
+    public static final StreamCodec<RegistryFriendlyByteBuf, TerminalSyncPacket> STREAM_CODEC = StreamCodec.composite(
         ByteBufCodecs.VAR_INT, TerminalSyncPacket::range,
         ItemStack.OPTIONAL_STREAM_CODEC, TerminalSyncPacket::freq1,
         ItemStack.OPTIONAL_STREAM_CODEC, TerminalSyncPacket::freq2,
