@@ -29,7 +29,7 @@ public class TerminalMenu extends AbstractContainerMenu {
             this.container.setItem(1, ItemStack.parseOptional(playerInventory.player.registryAccess(), tag.getCompound("freq2")));
         }
 
-        // 👇 频率 1 和频率 2 槽位 👇
+        // 频率槽位
         this.addSlot(new Slot(container, 0, 17, 29) {
             @Override public int getMaxStackSize() { return 1; }
             @Override public boolean mayPlace(ItemStack stack) { return false; }
@@ -39,16 +39,22 @@ public class TerminalMenu extends AbstractContainerMenu {
             @Override public boolean mayPlace(ItemStack stack) { return false; }
         });
 
-        // 👇 大背包（物品栏）：起点 X=9, Y=106，间距19 👇
+        // 👇 最终绝对数值 👇
+        int START_X = 8;   
+        int START_Y = 106; // 大背包 Y = 106
+        int STEP = 19;     
+
+        // 大背包（3排9列）
         for (int i = 0; i < 3; ++i) {
             for (int j = 0; j < 9; ++j) {
-                this.addSlot(new Slot(playerInventory, j + i * 9 + 9, 9 + j * 19, 106 + i * 19));
+                this.addSlot(new Slot(playerInventory, j + i * 9 + 9, START_X + j * STEP, START_Y + i * STEP));
             }
         }
         
-        // 👇 快捷栏：起点 X=9, Y=151，间距19 👇
+        // 快捷栏（1排9列）
+        int HOTBAR_Y = 183; // 快捷栏 Y = 106 + 77 = 183
         for (int k = 0; k < 9; ++k) {
-            this.addSlot(new Slot(playerInventory, k, 9 + k * 19, 151));
+            this.addSlot(new Slot(playerInventory, k, START_X + k * STEP, HOTBAR_Y));
         }
     }
 
@@ -87,4 +93,8 @@ public class TerminalMenu extends AbstractContainerMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) { return ItemStack.EMPTY; }
+
+    public ItemStack getTerminalStack() {
+        return this.terminalStack;
+    }
 }
