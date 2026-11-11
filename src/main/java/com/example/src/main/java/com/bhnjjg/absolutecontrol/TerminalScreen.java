@@ -10,7 +10,6 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.sounds.SoundEvents;
 
-// 👇 这次老老实实把正确的包名写上 👇
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.nbt.CompoundTag;
@@ -34,13 +33,16 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         int x = (this.width - this.imageWidth) / 2;
         int y = (this.height - this.imageHeight) / 2;
 
-        // 输入框：宽 50，高 12，位置 X=45, Y=69
-        this.rangeInput = new EditBox(this.font, x + 45, y + 69, 50, 12, Component.literal("范围"));
+        // 👇 坐标已死磕锁定为 X=28, Y=76 👇
+        this.rangeInput = new EditBox(this.font, x + 28, y + 76, 100, 12, Component.literal("范围"));
         this.rangeInput.setMaxLength(3);
         this.rangeInput.setValue("2");
         this.rangeInput.setFilter(text -> text.matches("\\d*"));
-        this.rangeInput.setBordered(false);
+        this.rangeInput.setBordered(false); 
         this.rangeInput.setTextColor(0x000000); 
+        this.rangeInput.setCanLoseFocus(true); 
+        this.rangeInput.setCursorPosition(0); 
+        this.rangeInput.setHighlightPos(0);
         this.addRenderableWidget(this.rangeInput);
     }
 
@@ -50,15 +52,13 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         double localY = mouseY - this.topPos;
 
         if (button == 0) {
-            // 打勾按钮区域判定
+            // 打勾按钮区域
             if (localX >= 135 && localX <= 165 && localY >= 58 && localY <= 85) {
                 if (this.minecraft != null && this.minecraft.player != null) {
-                    // 存入范围数据
                     String value = this.rangeInput.getValue();
                     int range = value.isEmpty() ? 2 : Integer.parseInt(value);
                     
                     ItemStack stack = ((TerminalMenu) this.menu).getTerminalStack();
-                    // 👇 这里也改成正确的 CustomData 路径 👇
                     CustomData customData = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
                     CompoundTag tag = customData.copyTag();
                     tag.putInt("range", range);
@@ -70,7 +70,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
                 return true; 
             }
 
-            // 频率槽位判定
+            // 频率槽位
             for (int i = 0; i < 2; i++) {
                 Slot slot = this.menu.slots.get(i);
                 if (this.isHovering(slot.x, slot.y, 16, 16, mouseX, mouseY)) {
@@ -79,7 +79,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
                 }
             }
 
-            // 背包判定（分身魔法）
+            // 背包判定
             if (selectedSlot != -1) {
                 for (Slot slot : this.menu.slots) {
                     if (slot.index >= 2 && this.isHovering(slot.x, slot.y, 16, 16, mouseX, mouseY)) {
