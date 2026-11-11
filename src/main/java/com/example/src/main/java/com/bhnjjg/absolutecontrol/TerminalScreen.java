@@ -29,13 +29,14 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         int x = (this.width - this.imageWidth) / 2;
         int y = (this.height - this.imageHeight) / 2;
 
-        // 👈 输入框继续左移
-        this.rangeInput = new EditBox(this.font, x + 15, y + 60, 100, 15, Component.literal("范围"));
+        // 👇 输入框计算：你需要左下角 Y=11，MC字体高度约8，所以输入框组件顶部应该在 Y=3 左右 👇
+        // X=29 保持你给的
+        this.rangeInput = new EditBox(this.font, x + 29, y + 3, 100, 12, Component.literal("范围"));
         this.rangeInput.setMaxLength(3);
         this.rangeInput.setValue("2");
         this.rangeInput.setFilter(text -> text.matches("\\d*"));
         this.rangeInput.setBordered(false);
-        this.rangeInput.setTextColor(0x404040); 
+        this.rangeInput.setTextColor(0x000000); // 黑字
         this.addRenderableWidget(this.rangeInput);
     }
 
@@ -45,8 +46,8 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         double localY = mouseY - this.topPos;
 
         if (button == 0) {
-            // 打勾按钮区域
-            if (localX >= 140 && localX <= 170 && localY >= 55 && localY <= 80) {
+            // 打勾按钮区域 (保持你之前的估算)
+            if (localX >= 135 && localX <= 165 && localY >= 58 && localY <= 85) {
                 if (this.minecraft != null && this.minecraft.player != null) {
                     this.minecraft.player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 0.5F, 1.0F);
                     this.minecraft.player.sendSystemMessage(Component.literal("§a[绝对控制] 保存成功！"));
@@ -54,7 +55,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
                 return true; 
             }
 
-            // 频率槽位判定（直接读后台物理槽位）
+            // 频率槽位判定（直接读 Menu 里的绝对坐标）
             for (int i = 0; i < 2; i++) {
                 Slot slot = this.menu.slots.get(i);
                 if (this.isHovering(slot.x, slot.y, 16, 16, mouseX, mouseY)) {
@@ -63,7 +64,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
                 }
             }
 
-            // 背包判定
+            // 背包判定（同样依赖绝对坐标）
             if (selectedSlot != -1) {
                 for (Slot slot : this.menu.slots) {
                     if (slot.index >= 2 && this.isHovering(slot.x, slot.y, 16, 16, mouseX, mouseY)) {
@@ -105,17 +106,21 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
         
+        // 👇 精准计算中心点，画高亮框，保证刚好覆盖 16x16 👇
         if (selectedSlot != -1) {
             Slot slot = this.menu.slots.get(selectedSlot);
-            guiGraphics.fill(this.leftPos + slot.x, this.topPos + slot.y, this.leftPos + slot.x + 16, this.topPos + slot.y + 16, 0x88FFFFFF);
+            int centerX = this.leftPos + slot.x + 8;
+            int centerY = this.topPos + slot.y + 8;
+            
+            // 以中心点反推，画出 16x16 的框
+            guiGraphics.fill(centerX - 8, centerY - 8, centerX + 8, centerY + 8, 0x88FFFFFF);
         }
     }
 
     @Override
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
         Component titleText = this.getTitle();
-        int textWidth = this.font.width(titleText);
-        // 👈 改成金色带阴影，绝对能看到！
-        guiGraphics.drawString(this.font, titleText, (this.imageWidth - textWidth) / 2, 12, 0xFFFF00, true);
+        // 👇 文字计算：你给的左下角是 6,11。减去字体高度 8，所以左上角画在 Y=3 👇
+        guiGraphics.drawString(this.font, titleText, 6, 3, 0xFFFF00, true);
     }
 }
