@@ -29,13 +29,13 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         int x = (this.width - this.imageWidth) / 2;
         int y = (this.height - this.imageHeight) / 2;
 
-        // 👇 输入框老实回到 62 👇
-        this.rangeInput = new EditBox(this.font, x + 29, y + 62, 100, 12, Component.literal("范围"));
+        // 👇 输入框锁定 X=29, Y=69，高度 8 👇
+        this.rangeInput = new EditBox(this.font, x + 29, y + 69, 80, 8, Component.literal("范围"));
         this.rangeInput.setMaxLength(3);
         this.rangeInput.setValue("2");
         this.rangeInput.setFilter(text -> text.matches("\\d*"));
         this.rangeInput.setBordered(false);
-        this.rangeInput.setTextColor(0xFFFF00); // 改成黄色，防止和灰底看不清
+        this.rangeInput.setTextColor(0x000000); // 数字黑色
         this.addRenderableWidget(this.rangeInput);
     }
 
@@ -45,7 +45,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         double localY = mouseY - this.topPos;
 
         if (button == 0) {
-            // 打勾按钮区域
+            // 打勾按钮区域判定
             if (localX >= 135 && localX <= 165 && localY >= 58 && localY <= 85) {
                 if (this.minecraft != null && this.minecraft.player != null) {
                     this.minecraft.player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 0.5F, 1.0F);
@@ -54,6 +54,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
                 return true; 
             }
 
+            // 频率槽位
             for (int i = 0; i < 2; i++) {
                 Slot slot = this.menu.slots.get(i);
                 if (this.isHovering(slot.x, slot.y, 16, 16, mouseX, mouseY)) {
@@ -62,6 +63,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
                 }
             }
 
+            // 背包判定
             if (selectedSlot != -1) {
                 for (Slot slot : this.menu.slots) {
                     if (slot.index >= 2 && this.isHovering(slot.x, slot.y, 16, 16, mouseX, mouseY)) {
@@ -103,13 +105,12 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
         
-        // 高亮框
         if (selectedSlot != -1) {
             Slot slot = this.menu.slots.get(selectedSlot);
             guiGraphics.fill(this.leftPos + slot.x, this.topPos + slot.y, this.leftPos + slot.x + 16, this.topPos + slot.y + 16, 0x88FFFFFF);
         }
 
-        // 👇 核心补丁：把丢失的悬停提示（Tooltip）加回来！ 👇
+        // 悬停提示（频率1/2）
         for (int i = 0; i < 2; i++) {
             Slot slot = this.menu.slots.get(i);
             if (this.isHovering(slot.x, slot.y, 16, 16, mouseX, mouseY)) {
@@ -121,6 +122,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
     @Override
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
         Component titleText = this.getTitle();
+        // 标题黄色带阴影
         guiGraphics.drawString(this.font, titleText, 6, 3, 0xFFFF00, true);
     }
 }
