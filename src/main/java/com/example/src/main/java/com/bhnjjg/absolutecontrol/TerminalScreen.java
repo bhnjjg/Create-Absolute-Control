@@ -7,13 +7,12 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
     private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath("absolute_control", "textures/gui/terminal_gui.png");
     private EditBox rangeInput;
-    private int selectedSlot = -1; // -1: 无选中, 0: 频率1, 1: 频率2
+    private int selectedSlot = -1; 
 
     public TerminalScreen(TerminalMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
@@ -48,57 +47,48 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         double localX = mouseX - this.leftPos;
         double localY = mouseY - this.topPos;
 
-        if (button == 0) { // 只处理左键
-            // 1. 检查是否点击了频率槽
+        if (button == 0) {
             if (localX >= 15 && localX <= 33 && localY >= 25 && localY <= 43) {
                 toggleSelection(0);
-                return true; // 拦截，不让原版拿起物品
+                return true;
             }
             else if (localX >= 40 && localX <= 58 && localY >= 25 && localY <= 43) {
                 toggleSelection(1);
                 return true;
             }
 
-            // 2. 如果处于“选中频率”状态，且点击了玩家背包区域
             if (selectedSlot != -1) {
-                // 玩家背包起始坐标 (8, 110)，每个格子 18x18，一共 3 行 9 列
                 if (mouseX >= this.leftPos + 8 && mouseX < this.leftPos + 8 + 9 * 18 &&
                     mouseY >= this.topPos + 110 && mouseY < this.topPos + 110 + 3 * 18) {
                     
                     int col = (int) ((mouseX - (this.leftPos + 8)) / 18);
                     int row = (int) ((mouseY - (this.topPos + 110)) / 18);
-                    int slotIndex = 2 + col + row * 9; // 对应 Menu 里的槽位索引
+                    int slotIndex = 2 + col + row * 9; 
 
-                    ItemStack source = this.menu.slots.get(slotIndex).getItem();
-                    if (!source.isEmpty()) {
-                        this.menu.setFrequency(selectedSlot, source); // 产生分身
-                        if (this.minecraft != null && this.minecraft.player != null) {
-                            this.minecraft.player.playSound(net.minecraft.sounds.SoundEvents.ITEM_PICKUP, 0.5F, 1.5F);
+                    if (slotIndex >= 2 && slotIndex < this.menu.slots.size()) {
+                        ItemStack source = this.menu.slots.get(slotIndex).getItem();
+                        if (!source.isEmpty()) {
+                            // 👇 核心修复：给 menu 强转类型！ 👇
+                            ((TerminalMenu) this.menu).setFrequency(selectedSlot, source); 
                         }
                     }
-                    selectedSlot = -1; // 分配完成，退出选中模式
-                    return true; // 拦截，不让物品被拿起来
+                    selectedSlot = -1; 
+                    return true; 
                 } else {
-                    // 点到了背包外面，取消选中
-                    selectedSlot = -1;
+                    selectedSlot = -1; 
                     return true;
                 }
             }
         }
-
-        // 其他情况全部交给原版处理（正常拖拽、右键等）
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
-    // 切换频率选中状态
     private void toggleSelection(int slotIndex) {
-        if (this.minecraft == null || this.minecraft.player == null) return;
         if (selectedSlot == slotIndex) {
-            selectedSlot = -1; // 再次点击同一个槽，取消选中
+            selectedSlot = -1; 
         } else {
-            selectedSlot = slotIndex; // 选中新的槽
+            selectedSlot = slotIndex; 
         }
-        this.minecraft.player.playSound(net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 0.5F, 1.0F);
     }
 
     @Override
@@ -113,14 +103,12 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
         
-        // 渲染选中高亮白框
         if (selectedSlot != -1) {
             int slotX = this.leftPos + (selectedSlot == 0 ? 15 : 40);
             int slotY = this.topPos + 25;
             guiGraphics.fill(slotX - 1, slotY - 1, slotX + 17, slotY + 17, 0xFFFFFFFF);
         }
 
-        // 悬停提示
         if (this.isHovering(15, 25, 18, 18, mouseX, mouseY)) {
             guiGraphics.renderTooltip(this.font, Component.literal("频率 1 (点击选中)"), mouseX, mouseY);
         } else if (this.isHovering(40, 25, 18, 18, mouseX, mouseY)) {
