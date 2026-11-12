@@ -1,6 +1,7 @@
 package com.bhnjjg.absolutecontrol;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -50,8 +51,7 @@ public class TerminalEvents {
 
     @SubscribeEvent
     public static void onServerTick(ServerTickEvent.Post event) {
-        // 极简测试：不检查频率，只要手里拿遥控器并且按 Shift 就触发
-        if (event.getServer().getTickCount() % 5 != 0) return;
+        if (event.getServer().getTickCount() % 10 != 0) return;
 
         for (ServerLevel level : event.getServer().getAllLevels()) {
             TerminalData data = TerminalData.get(level);
@@ -60,32 +60,36 @@ public class TerminalEvents {
             for (ServerPlayer player : level.players()) {
                 ItemStack mainHand = player.getMainHandItem();
                 
-                // 判断手里是不是遥控器
-                if (BuiltInRegistries.ITEM.getKey(mainHand.getItem()).toString().equals("create:linked_controller")) {
+                // 测试条件：拿着遥控器按 Shift
+                if (BuiltInRegistries.ITEM.getKey(mainHand.getItem()).toString().equals("create:linked_controller") && player.isShiftKeyDown()) {
                     
-                    // 👇 暴力测试：按 Shift 直接触发，不再管频率 👇
-                    if (player.isShiftKeyDown()) {
-                        for (Map.Entry<BlockPos, CompoundTag> entry : data.boundTerminals.entrySet()) {
-                            BlockPos targetPos = entry.getKey();
-                            CompoundTag config = entry.getValue();
+                    for (Map.Entry<BlockPos, CompoundTag> entry : data.boundTerminals.entrySet()) {
+                        BlockPos targetPos = entry.getKey();
+                        CompoundTag config = entry.getValue();
 
-                            // 距离检测
-                            int range = config.contains("range") ? config.getInt("range") : 2;
-                            if (player.blockPosition().distSqr(targetPos) > (range * range)) continue;
+                        int range = config.contains("range") ? config.getInt("range") : 2;
+                        if (player.blockPosition().distSqr(targetPos) > (range * range)) continue;
 
-                            // 👇 核心：强制红石激活 👇
-                            BlockState state = level.getBlockState(targetPos);
-                            
-                            // 如果是红石灯，直接给它点亮！
-                            if (state.is(Blocks.REDSTONE_LAMP)) {
-                                level.setBlockAndUpdate(targetPos, state.setValue(RedStoneLampBlock.LIT, true));
-                            }
-                            
-                            // 不管什么方块，都给一次邻居更新
-                            level.updateNeighborsAt(targetPos, Blocks.REDSTONE_BLOCK);
-                            
-                            player.sendSystemMessage(Component.literal("§b[绝对控制] 信号已触发！"));
+                        BlockState state = level.getBlockState(targetPos);
+                        
+                        // 👇 终极物理骗术 👇
+                        // 1. 如果是红石灯，直接点燃
+                        if (state.is(Blocks.REDSTONE_LAMP)) {
+                            level.setBlockAndUpdate(targetPos, state.setValue(RedStoneLampBlock.LIT, true));
                         }
+
+                        // 2. 强制更新周围所有的邻居（骗它外面通电了）
+                        for (Direction dir : Direction.values()) {
+                            level.updateNeighborsAt(targetPos.relative(dir), Blocks.REDSTONE_BLOCK);
+                        }
+                        
+                        // 3. 核心神技：向机器强行注入红石更新事件，让 Create 机器以为自己接到了红石信号！
+                        state.neighborChanged(level, targetPos, Blocks.REDSTONE_BLOCK, targetPos, false);
+                        
+                        // 4. 针对机械动力，很多机器是看“方块更新”和“状态”的，我们甚至可以暴力刷新它
+                        level.blockUpdated(targetPos, state.getBlock());
+
+                        player.sendSystemMessage(Component.literal("§b[绝对控制] 已向机器内部注射红石信号！"));
                     }
                 }
             }
