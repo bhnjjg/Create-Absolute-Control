@@ -18,16 +18,13 @@ sourceSets.main.resources {
     exclude("src/generated/**/.cache")
 }
 
-// 👇 核心添加区域一：加入 Create 的依赖仓库 👇
+// 👇 核心修改区域一：官方推荐的 Maven 仓库 👇
 repositories {
     maven {
-        url = "https://maven.createmod.net" // Create 6.0+ 的官方 Maven 仓库
+        url = "https://maven.createmod.net" // Create, Ponder, Flywheel
     }
     maven {
-        url = "https://maven.ithundxr.dev/snapshots" // Create 的前置依赖库
-    }
-    maven {
-        url = "https://maven.blamejared.com" // JEI 等常用库
+        url = "https://maven.ithundxr.dev/snapshots" // Registrate
     }
 }
 
@@ -84,19 +81,22 @@ configurations {
     runtimeClasspath.extendsFrom localRuntime
 }
 
-// 👇 核心添加区域二：加入 Create 的编译依赖 👇
+// 👇 核心修改区域二：官方推荐的依赖坐标 👇
 dependencies {
-    // 编译时依赖 Create 1.21.1 的 API。
-    // 如果编译报错说找不到这个版本，可以尝试把 6.0.6 改成 6.0.4 或者 6.0.5
-    compileOnly "com.simibubi.create:create-1.21.1:6.0.6"
+    // Create 核心库，使用 'slim' 分类器仅包含 API，transitive=false 避免传递依赖冲突
+    compileOnly("com.simibubi.create:create-${minecraft_version}:${create_version}:slim") { transitive = false }
     
-    // Create 6.0 版本依赖的一些前置库（如果编译时报错缺少类，取消下面这两行的注释）
-    // compileOnly "net.createmod.catnip:Catnip-1.21.1:0.6.0"
-    // compileOnly "dev.engine-room.flywheel:flywheel-neoforge-1.21.1:0.6.10"
+    // Ponder（Create 内置的引导库）
+    compileOnly("net.createmod.ponder:ponder-neoforge:${ponder_version}+mc${minecraft_version}")
     
-    // 为了在本地测试环境里能正常加载 Create，也加上 localRuntime
-    // (但在 GitHub 云端打包时，其实只要有 compileOnly 就能编译)
-    // localRuntime "com.simibubi.create:create-1.21.1:6.0.6"
+    // Flywheel（Create 的渲染引擎）
+    compileOnly("dev.engine-room.flywheel:flywheel-neoforge-api-${minecraft_version}:${flywheel_version}")
+    
+    // Registrate（Create 使用的注册库）
+    compileOnly("com.tterrag.registrate:Registrate:${registrate_version}")
+
+    // 如果你需要在本地开发环境中运行 Create（在 IDE 里测试），取消下面这行的注释
+    // localRuntime("com.simibubi.create:create-${minecraft_version}:${create_version}:slim") { transitive = false }
 }
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
