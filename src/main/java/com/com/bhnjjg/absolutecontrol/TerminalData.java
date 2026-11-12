@@ -12,6 +12,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class TerminalData extends SavedData {
+    // 👇 全局状态位，写在最显眼的地方，确保能认出来 👇
+    public static boolean isSignalActive = false;
+
     public final Map<BlockPos, CompoundTag> boundTerminals = new HashMap<>();
 
     public static TerminalData get(ServerLevel level) {
@@ -46,9 +49,4 @@ public class TerminalData extends SavedData {
         tag.put("terminals", list);
         return tag;
     }
-}public class TerminalData extends SavedData {
-    // 👇 加上这一行 👇
-    public static boolean isSignalActive = false; 
-    
-    // ... 其他代码不变 ...
 }
