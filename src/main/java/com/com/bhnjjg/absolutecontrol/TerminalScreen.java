@@ -45,13 +45,17 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         double localX = mouseX - this.leftPos;
         double localY = mouseY - this.topPos;
 
-        // 👇 新增：右键清空频率槽 👇
+        // 👇 右键清空（发网络包，秒清空） 👇
         if (button == 1) {
             for (int i = 0; i < 2; i++) {
                 Slot slot = this.menu.slots.get(i);
                 if (this.isHovering(slot.x, slot.y, 16, 16, mouseX, mouseY)) {
                     if (!slot.getItem().isEmpty()) {
                         ((TerminalMenu) this.menu).setFrequency(i, ItemStack.EMPTY);
+                        PacketDistributor.sendToServer(new TerminalSyncPacket(((TerminalMenu)this.menu).currentRange, 
+                            i == 0 ? ItemStack.EMPTY : ((TerminalMenu)this.menu).container.getItem(0),
+                            i == 1 ? ItemStack.EMPTY : ((TerminalMenu)this.menu).container.getItem(1)
+                        ));
                         if (this.minecraft != null && this.minecraft.player != null) {
                             this.minecraft.player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 0.5F, 1.0F);
                         }
@@ -73,7 +77,10 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
             for (int i = 0; i < 2; i++) {
                 Slot slot = this.menu.slots.get(i);
                 if (this.isHovering(slot.x, slot.y, 16, 16, mouseX, mouseY)) {
-                    toggleSelection(i);
+                    // 👇 只有空槽位才能被选中点亮 👇
+                    if (slot.getItem().isEmpty()) {
+                        toggleSelection(i);
+                    }
                     return true;
                 }
             }
@@ -151,7 +158,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         for (int i = 0; i < 2; i++) {
             Slot slot = this.menu.slots.get(i);
             if (this.isHovering(slot.x, slot.y, 16, 16, mouseX, mouseY)) {
-                guiGraphics.renderTooltip(this.font, Component.literal("频率 " + (i + 1) + " (右键清空)"), mouseX, mouseY);
+                guiGraphics.renderTooltip(this.font, Component.literal("频率 " + (i + 1)), mouseX, mouseY);
             }
         }
     }
