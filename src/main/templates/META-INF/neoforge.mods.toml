@@ -23,3 +23,7 @@ Create 的附属包。添加了一个无线红石终端。
     versionRange="[1.21.1]"
     ordering="NONE"
     side="BOTH"
+
+# 👇 就是这行！告诉游戏去加载咱们的 Mixin！ 👇
+[[mixins]]
+config = "absolute_control.mixins.json"
