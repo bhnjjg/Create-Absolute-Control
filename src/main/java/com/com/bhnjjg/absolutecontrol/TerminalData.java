@@ -46,4 +46,9 @@ public class TerminalData extends SavedData {
         tag.put("terminals", list);
         return tag;
     }
+}public class TerminalData extends SavedData {
+    // 👇 加上这一行 👇
+    public static boolean isSignalActive = false; 
+    
+    // ... 其他代码不变 ...
 }
