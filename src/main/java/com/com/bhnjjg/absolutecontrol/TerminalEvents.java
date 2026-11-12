@@ -13,7 +13,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.RedStoneLampBlock;
+import net.minecraft.world.level.block.RedstoneLampBlock; // 👈 修复了大小写
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -60,7 +60,6 @@ public class TerminalEvents {
             for (ServerPlayer player : level.players()) {
                 ItemStack mainHand = player.getMainHandItem();
                 
-                // 测试条件：拿着遥控器按 Shift
                 if (BuiltInRegistries.ITEM.getKey(mainHand.getItem()).toString().equals("create:linked_controller") && player.isShiftKeyDown()) {
                     
                     for (Map.Entry<BlockPos, CompoundTag> entry : data.boundTerminals.entrySet()) {
@@ -72,24 +71,27 @@ public class TerminalEvents {
 
                         BlockState state = level.getBlockState(targetPos);
                         
-                        // 👇 终极物理骗术 👇
-                        // 1. 如果是红石灯，直接点燃
+                        // 1. 如果是红石灯，直接点亮（修复了 RedstoneLampBlock 的大小写）
                         if (state.is(Blocks.REDSTONE_LAMP)) {
-                            level.setBlockAndUpdate(targetPos, state.setValue(RedStoneLampBlock.LIT, true));
+                            level.setBlockAndUpdate(targetPos, state.setValue(RedstoneLampBlock.LIT, true));
                         }
 
-                        // 2. 强制更新周围所有的邻居（骗它外面通电了）
+                        // 2. 给周围所有方块发送红石更新
                         for (Direction dir : Direction.values()) {
-                            level.updateNeighborsAt(targetPos.relative(dir), Blocks.REDSTONE_BLOCK);
+                            BlockPos neighborPos = targetPos.relative(dir);
+                            BlockState neighborState = level.getBlockState(neighborPos);
+                            
+                            if (neighborState.is(Blocks.REDSTONE_WIRE)) {
+                                level.setBlockAndUpdate(neighborPos, neighborState.setValue(net.minecraft.world.level.block.RedStoneWireBlock.POWER, 15));
+                            }
+                            
+                            // 👇 删掉了报错的 state.neighborChanged，改用下面的强制更新 👇
+                            level.updateNeighborsAt(neighborPos, Blocks.REDSTONE_BLOCK);
                         }
-                        
-                        // 3. 核心神技：向机器强行注入红石更新事件，让 Create 机器以为自己接到了红石信号！
-                        state.neighborChanged(level, targetPos, Blocks.REDSTONE_BLOCK, targetPos, false);
-                        
-                        // 4. 针对机械动力，很多机器是看“方块更新”和“状态”的，我们甚至可以暴力刷新它
-                        level.blockUpdated(targetPos, state.getBlock());
 
-                        player.sendSystemMessage(Component.literal("§b[绝对控制] 已向机器内部注射红石信号！"));
+                        level.updateNeighborsAt(targetPos, Blocks.REDSTONE_BLOCK);
+                        
+                        player.sendSystemMessage(Component.literal("§b[绝对控制] 强制注入红石信号！"));
                     }
                 }
             }
