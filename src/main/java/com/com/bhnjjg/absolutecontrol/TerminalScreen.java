@@ -45,11 +45,27 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         double localX = mouseX - this.leftPos;
         double localY = mouseY - this.topPos;
 
+        // 👇 新增：右键清空频率槽 👇
+        if (button == 1) {
+            for (int i = 0; i < 2; i++) {
+                Slot slot = this.menu.slots.get(i);
+                if (this.isHovering(slot.x, slot.y, 16, 16, mouseX, mouseY)) {
+                    if (!slot.getItem().isEmpty()) {
+                        ((TerminalMenu) this.menu).setFrequency(i, ItemStack.EMPTY);
+                        if (this.minecraft != null && this.minecraft.player != null) {
+                            this.minecraft.player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 0.5F, 1.0F);
+                        }
+                    }
+                    return true; 
+                }
+            }
+        }
+
+        // 左键逻辑
         if (button == 0) {
             if (localX >= 135 && localX <= 165 && localY >= 58 && localY <= 85) {
                 if (this.minecraft != null && this.minecraft.player != null) {
-                    // 👇 发包给服务端并关闭 👇
-                    sendPacketAndClose();
+                    sendPacketAndClose(); 
                 }
                 return true; 
             }
@@ -83,14 +99,12 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
-    // 当玩家按 ESC 或者界面临时关闭时触发
     @Override
     public void onClose() {
-        sendPacketAndClose();
+        sendPacketAndClose(); 
         super.onClose();
     }
 
-    // 统一发包函数
     private void sendPacketAndClose() {
         if (this.minecraft == null || this.minecraft.player == null) return;
         
@@ -137,7 +151,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         for (int i = 0; i < 2; i++) {
             Slot slot = this.menu.slots.get(i);
             if (this.isHovering(slot.x, slot.y, 16, 16, mouseX, mouseY)) {
-                guiGraphics.renderTooltip(this.font, Component.literal("频率 " + (i + 1)), mouseX, mouseY);
+                guiGraphics.renderTooltip(this.font, Component.literal("频率 " + (i + 1) + " (右键清空)"), mouseX, mouseY);
             }
         }
     }
